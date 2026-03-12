@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+  <title>yoshunko 驅動盤生成器</title>
+  <style>
+    /* 歷史紀錄卡片的自訂樣式 */
+    .history-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      background: #fff;
+    }
+    .history-img-circle {
+      width: 100px;
+      height: 100px;
+      background-color: #8a8a8a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+    .history-img-circle img {
+      max-width: 80%;
+      max-height: 80%;
+      object-fit: contain;
+    }
+    .history-divider {
+      border-bottom: 2px solid #555;
+      margin: 4px 0 8px 0;
+    }
+    .sub-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 1rem;
+      row-gap: 0.25rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <br/>
+    <div class="card">
+      <div class="card-content">
+        
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
+          <div style="width: 100px;"></div> <h1 class="title has-text-centered mb-0" data-i18n="title">yoshunko 驅動盤輪椅🦽</h1>
+          <div class="select is-small" style="width: 110px;">
+            <select id="lang-switcher">
+              <option value="zh-Hant">繁體中文</option>
+              <option value="zh-CN">简体中文</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="has-text-centered mb-4">
+          <button class="button is-small is-info is-light" id="tutorial-btn" data-i18n="tutorialBtn">📖 使用教學</button>
+        </div>
+
+        <div id="tutorial-modal" class="modal">
+          <div class="modal-background" id="tutorial-modal-bg"></div>
+          <div class="modal-card">
+            <header class="modal-card-head">
+              <p class="modal-card-title has-text-weight-bold" data-i18n="tutorialTitle">📖 使用教學</p>
+              <button class="delete" aria-label="close" id="tutorial-close-btn"></button>
+            </header>
+            <section class="modal-card-body">
+              <p class="mb-2" data-i18n="tutorialStep1">生成新驅動盤時，請直接點擊「下載並儲存」。</p>
+              <p class="mb-2" data-i18n="tutorialStep2">生成後的檔案放入：</p>
+              <div class="notification is-light p-3">
+                <code class="is-size-6 has-text-weight-bold has-text-danger" data-i18n="tutorialPath">\Ubuntu\home\自訂名稱資料夾\yoshunko\state\player\1\equip</code>
+              </div>
+            </section>
+            <footer class="modal-card-foot is-justify-content-flex-end">
+              <button class="button is-info" id="tutorial-confirm-btn" data-i18n="tutorialConfirm">確認</button>
+            </footer>
+          </div>
+        </div>
+
+        <div class="tabs is-centered is-boxed is-medium">
+          <ul>
+            <li class="is-active" id="tab-builder-btn">
+              <a data-i18n="tabBuilder">生成器 (Builder)</a>
+            </li>
+            <li id="tab-history-btn">
+              <a data-i18n="tabHistory">歷史紀錄 (History)</a>
+            </li>
+          </ul>
+        </div>
+
+        <div id="view-builder" class="content">
+
+          <figure class="image is-128x128 mx-auto mb-4" id="disc-image-container" style="display: none; margin: 0 auto 1.5rem auto;">
+            <img id="disc-image" src="" alt="Disc Image">
+          </figure>
+
+          <div class="columns is-mobile is-vcentered is-multiline">
+            <div class="column is-narrow">
+              <div class="field">
+                <p class="control">
+                  <span class="select">
+                    <select id="disc-select">
+                      <option value="" disabled selected data-i18n="discPlaceholder">選擇驅動盤</option>
+                      <option value="310"></option>
+                      <option value="311"></option>
+                      <option value="312"></option>
+                      <option value="313"></option>
+                      <option value="314"></option>
+                      <option value="315"></option>
+                      <option value="316"></option>
+                      <option value="318"></option>
+                      <option value="319"></option>
+                      <option value="322"></option>
+                      <option value="323"></option>
+                      <option value="324"></option>
+                      <option value="325"></option>
+                      <option value="326"></option>
+                      <option value="327"></option>
+                      <option value="328"></option>
+                      <option value="329"></option>
+                      <option value="330"></option>
+                      <option value="331"></option>
+                      <option value="332"></option>
+                      <option value="333"></option>
+                      <option value="334"></option>
+                      <option value="335"></option>
+                      <option value="336"></option>
+                      <option value="337"></option>
+                      <option value="338"></option>
+                    </select>
+                  </span>
+                </p>
+              </div>
+            </div>
+            <div class="column is-narrow">
+              <div class="field">
+                <p class="control">
+                  <span class="select">
+                    <select id="rank">
+                      <option value="2" data-i18n="rankB">B級</option>
+                      <option value="3" data-i18n="rankA">A級</option>
+                      <option value="4" selected="selected" data-i18n="rankS">S級</option>
+                    </select>
+                  </span>
+                </p>
+              </div>
+            </div>
+            <div class="column is-narrow">
+              <div class="field">
+                <p class="control">
+                  <span class="select">
+                    <select id="position">
+                      <option value="" disabled selected data-i18n="posPlaceholder">部位</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                      <option value="6">6</option>
+                    </select>
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="field has-addons">
+            <p class="control">
+              <span class="select">
+                <select id="main-stat-select">
+                  <option value="" disabled selected data-i18n="mainStatPlaceholder">請選擇主詞條</option>
+                </select>
+              </span>
+            </p>
+            <p class="control is-expanded">
+              <input type="text" id="main-stat-value" class="input" readonly data-i18n-placeholder="mainStatStatic" placeholder="主詞條為固定值"/>
+            </p>
+          </div>
+
+          <div class="field has-addons">
+            <p class="control">
+              <span class="select">
+                <select id="sub-stat-select-1">
+                  <option value="" disabled selected data-i18n="subStatPlaceholder">請選擇副詞條</option>
+                </select>
+              </span>
+            </p>
+            <p class="control is-expanded">
+              <input type="number" id="sub-stat-value-1" class="input" data-i18n-placeholder="subStatInput_1" placeholder="副詞條 1 強化次數" />
+            </p>
+          </div>
+
+          <div class="field has-addons">
+            <p class="control">
+              <span class="select">
+                <select id="sub-stat-select-2">
+                  <option value="" disabled selected data-i18n="subStatPlaceholder">請選擇副詞條</option>
+                </select>
+              </span>
+            </p>
+            <p class="control is-expanded">
+              <input type="number" id="sub-stat-value-2" class="input" data-i18n-placeholder="subStatInput_2" placeholder="副詞條 2 強化次數" />
+            </p>
+          </div>
+
+          <div class="field has-addons">
+            <p class="control">
+              <span class="select">
+                <select id="sub-stat-select-3">
+                  <option value="" disabled selected data-i18n="subStatPlaceholder">請選擇副詞條</option>
+                </select>
+              </span>
+            </p>
+            <p class="control is-expanded">
+              <input type="number" id="sub-stat-value-3" class="input" data-i18n-placeholder="subStatInput_3" placeholder="副詞條 3 強化次數" />
+            </p>
+          </div>
+
+          <div class="field has-addons">
+            <p class="control">
+              <span class="select">
+                <select id="sub-stat-select-4">
+                  <option value="" disabled selected data-i18n="subStatPlaceholder">請選擇副詞條</option>
+                </select>
+              </span>
+            </p>
+            <p class="control is-expanded">
+              <input type="number" id="sub-stat-value-4" class="input" data-i18n-placeholder="subStatInput_4" placeholder="副詞條 4 強化次數" />
+            </p>
+          </div>
+
+          <hr>
+
+          <div class="field has-addons mb-4">
+            <p class="control">
+              <a class="button is-static" data-i18n="nextFileStr">下一個下載檔名：</a>
+            </p>
+            <p class="control">
+              <input type="number" id="counter-input" class="input" value="1" min="1" style="max-width: 100px;" />
+            </p>
+            <p class="control">
+              <button class="button is-warning" id="reset-counter-btn" data-i18n="resetCounterBtn">重置為 1</button>
+            </p>
+          </div>
+
+          <div class="buttons">
+            <button class="button is-primary" id="create-download-btn" data-i18n="createDownloadBtn">下載並儲存 (Download & Save)</button>
+            <button class="button is-light" id="reset-button" data-i18n="resetBtn">重置面板 (Reset)</button>
+          </div>
+          
+          <pre id="output"></pre>
+        </div>
+
+
+        <div id="view-history" class="content" style="display: none;">
+          <h2 class="title has-text-centered" data-i18n="historyTitle">已儲存的驅動盤紀錄</h2>
+          <div class="has-text-right mb-3">
+            <button class="button is-small is-danger is-light" id="clear-history-btn" data-i18n="clearHistoryBtn">清空所有紀錄</button>
+          </div>
+          <div id="history-container">
+            </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { ZON } from 'https://cdn.jsdelivr.net/npm/zzon';
+
+    // === 語言字典 i18n ===
+    const i18n = {
+      'zh-Hant': {
+        title: "yoshunko 驅動盤輪椅🦽",
+        tutorialBtn: "📖 使用教學",
+        tutorialTitle: "📖 使用教學",
+        tutorialStep1: "生成新驅動盤時，請直接點擊「下載並儲存」。",
+        tutorialStep2: "生成後的檔案放入：",
+        tutorialPath: "\\Ubuntu\\home\\自訂名稱資料夾\\yoshunko\\state\\player\\1\\equip",
+        tutorialConfirm: "確認",
+        tabBuilder: "生成器 (Builder)",
+        tabHistory: "歷史紀錄 (History)",
+        discPlaceholder: "選擇驅動盤",
+        rankB: "B級", rankA: "A級", rankS: "S級",
+        posPlaceholder: "部位",
+        posUnit: "號位",
+        mainStatPlaceholder: "請選擇主詞條",
+        mainStatStatic: "主詞條為固定值",
+        subStatPlaceholder: "請選擇副詞條",
+        subStatInput_1: "副詞條 1 強化次數",
+        subStatInput_2: "副詞條 2 強化次數",
+        subStatInput_3: "副詞條 3 強化次數",
+        subStatInput_4: "副詞條 4 強化次數",
+        nextFileStr: "下一個下載檔名：",
+        resetCounterBtn: "重置為 1",
+        createDownloadBtn: "下載並儲存 (Download & Save)",
+        resetBtn: "重置面板 (Reset)",
+        historyTitle: "已儲存的驅動盤紀錄",
+        clearHistoryBtn: "清空所有紀錄",
+        emptyHistory: "目前沒有任何紀錄。",
+        directDownload: "直接下載",
+        applyBtn: "套用此設定",
+        deleteBtn: "刪除",
+        errorEmpty: "請確保已選擇驅動盤、部位、等級和主詞條。",
+        errorSum: "所有副詞條的強化總次數（包含基礎）加起來必須為 4 或 5 次。",
+        errorDup: "副詞條不允許重複，請重新選擇。",
+        successApply: "已成功載入設定，請點擊「下載並儲存」以產生並下載檔案。",
+        oldRecordAlert: "此筆為舊版紀錄，無法直接下載。請點擊「套用此設定」後重新生成並下載！",
+        confirmClear: "確定要清空所有歷史紀錄嗎？"
+      },
+      'zh-CN': {
+        title: "yoshunko 驱动盘轮椅🦽",
+        tutorialBtn: "📖 使用教学",
+        tutorialTitle: "📖 使用教学",
+        tutorialStep1: "生成新驱动盘时，请直接点击「下载并保存」。",
+        tutorialStep2: "生成后的文件放入：",
+        tutorialPath: "\\Ubuntu\\home\\自定义名称文件夹\\yoshunko\\state\\player\\1\\equip",
+        tutorialConfirm: "确认",
+        tabBuilder: "生成器 (Builder)",
+        tabHistory: "历史记录 (History)",
+        discPlaceholder: "选择驱动盘",
+        rankB: "B级", rankA: "A级", rankS: "S级",
+        posPlaceholder: "部位",
+        posUnit: "号位",
+        mainStatPlaceholder: "请选择主词条",
+        mainStatStatic: "主词条为固定值",
+        subStatPlaceholder: "请选择副词条",
+        subStatInput_1: "副词条 1 强化次数",
+        subStatInput_2: "副词条 2 强化次数",
+        subStatInput_3: "副词条 3 强化次数",
+        subStatInput_4: "副词条 4 强化次数",
+        nextFileStr: "下一个下载文件名：",
+        resetCounterBtn: "重置为 1",
+        createDownloadBtn: "下载并保存 (Download & Save)",
+        resetBtn: "重置面板 (Reset)",
+        historyTitle: "已保存的驱动盘记录",
+        clearHistoryBtn: "清空所有记录",
+        emptyHistory: "目前没有任何记录。",
+        directDownload: "直接下载",
+        applyBtn: "应用此设置",
+        deleteBtn: "删除",
+        errorEmpty: "请确保已选择驱动盘、部位、等级和主词条。",
+        errorSum: "所有副词条的强化总次数（包含基础）加起来必须为 4 或 5 次。",
+        errorDup: "副词条不允许重复，请重新选择。",
+        successApply: "已成功加载设置，请点击「下载并保存」以产生并下载文件。",
+        oldRecordAlert: "此条为旧版记录，无法直接下载。请点击「应用此设置」后重新生成并下载！",
+        confirmClear: "确定要清空所有历史记录吗？"
+      },
+      'en': {
+        title: "yoshunko Disc Wheelchair🦽",
+        tutorialBtn: "📖 Tutorial",
+        tutorialTitle: "📖 Tutorial",
+        tutorialStep1: "When creating a new disc, just click 'Download & Save'.",
+        tutorialStep2: "Place the generated files into the following path:",
+        tutorialPath: "\\Ubuntu\\home\\[CustomFolder]\\yoshunko\\state\\player\\1\\equip",
+        tutorialConfirm: "Confirm",
+        tabBuilder: "Builder",
+        tabHistory: "History",
+        discPlaceholder: "Select disc",
+        rankB: "B", rankA: "A", rankS: "S",
+        posPlaceholder: "Pos",
+        posUnit: "",
+        mainStatPlaceholder: "Select main stat",
+        mainStatStatic: "Main Stat is static",
+        subStatPlaceholder: "Select sub stat",
+        subStatInput_1: "Sub Stat 1 Value",
+        subStatInput_2: "Sub Stat 2 Value",
+        subStatInput_3: "Sub Stat 3 Value",
+        subStatInput_4: "Sub Stat 4 Value",
+        nextFileStr: "Next file name:",
+        resetCounterBtn: "Reset to 1",
+        createDownloadBtn: "Download & Save",
+        resetBtn: "Reset",
+        historyTitle: "Saved Disc Records",
+        clearHistoryBtn: "Clear All",
+        emptyHistory: "No records found.",
+        directDownload: "Direct DL",
+        applyBtn: "Apply",
+        deleteBtn: "Delete",
+        errorEmpty: "Please select disc, position, rank and main stat.",
+        errorSum: "Sub stats total value must be 4 or 5.",
+        errorDup: "Duplicate sub stats are not allowed.",
+        successApply: "Setting loaded successfully. Click 'Download & Save' to generate and download.",
+        oldRecordAlert: "Old record without ZON data. Please apply and recreate it!",
+        confirmClear: "Are you sure you want to clear all history?"
+      }
+    };
+
+    const discNames = {
+      "310": { 'zh-Hant': "啄木鳥電音", 'zh-CN': "啄木鸟电音", en: "Woodpecker Electro" },
+      "311": { 'zh-Hant': "河豚電音", 'zh-CN': "河豚电音", en: "Puffer Electro" },
+      "312": { 'zh-Hant': "震星迪斯科", 'zh-CN': "震星迪斯科", en: "Shockstar Disco" },
+      "313": { 'zh-Hant': "自由藍調", 'zh-CN': "自由蓝调", en: "Freedom Blues" },
+      "314": { 'zh-Hant': "激素龐克", 'zh-CN': "激素朋克", en: "Hormone Punk" },
+      "315": { 'zh-Hant': "靈魂搖滾", 'zh-CN': "灵魂摇滚", en: "Soul Rock" },
+      "316": { 'zh-Hant': "搖擺爵士", 'zh-CN': "摇摆爵士", en: "Swing Jazz" },
+      "318": { 'zh-Hant': "混沌爵士", 'zh-CN': "混沌爵士", en: "Chaos Jazz" },
+      "319": { 'zh-Hant': "原始龐克", 'zh-CN': "原始朋克", en: "Proto Punk" },
+      "322": { 'zh-Hant': "炎獄重金屬", 'zh-CN': "炎狱重金属", en: "Inferno Metal" },
+      "323": { 'zh-Hant': "混沌重金屬", 'zh-CN': "混沌重金属", en: "Chaotic Metal" },
+      "324": { 'zh-Hant': "雷暴重金屬", 'zh-CN': "雷暴重金属", en: "Thunder Metal" },
+      "325": { 'zh-Hant': "極地重金屬", 'zh-CN': "极地重金属", en: "Polar Metal" },
+      "326": { 'zh-Hant': "獠牙重金屬", 'zh-CN': "獠牙重金属", en: "Fanged Metal" },
+      "327": { 'zh-Hant': "折枝劍歌", 'zh-CN': "折枝剑歌", en: "Branch & Blade Song" },
+      "328": { 'zh-Hant': "靜聽嘉音", 'zh-CN': "静听嘉音", en: "Astral Voice" },
+      "329": { 'zh-Hant': "如影相隨", 'zh-CN': "如影相随", en: "Shadow Harmony" },
+      "330": { 'zh-Hant': "法厄同之歌", 'zh-CN': "法厄同之歌", en: "Phaethon's Melody" },
+      "331": { 'zh-Hant': "雲巋如我", 'zh-CN': "云岿如我", en: "Yunkui Tales" },
+      "332": { 'zh-Hant': "山大王", 'zh-CN': "山大王", en: "King of the Summit" },
+      "333": { 'zh-Hant': "拂曉生花", 'zh-CN': "拂晓生花", en: "Dawn's Bloom" },
+      "334": { 'zh-Hant': "月光騎士頌", 'zh-CN': "月光骑士颂", en: "Moonlight Lullaby" },
+      "335": { 'zh-Hant': "滄浪行歌", 'zh-CN': "沧浪行歌", en: "White Water Ballad" },
+      "336": { 'zh-Hant': "流光詠嘆", 'zh-CN': "流光咏叹", en: "Shining Aria" },
+      "337": { 'zh-Hant': "雪兔夢遊仙境", 'zh-CN': "雪兔梦游仙境", en: "Bunny in Wonderland" },
+      "338": { 'zh-Hant': "囚徒手記", 'zh-CN': "囚徒手记", en: "Notes From the Chained" }
+    };
+
+    const stats = [
+      { id: '11103', 'name_zh-Hant': '生命值', 'name_zh-CN': '生命值', name_en: 'HP', mainValue: 550, subValue: 112 , main_pos:[1] },
+      { id: '11102', 'name_zh-Hant': '生命值 (%)', 'name_zh-CN': '生命值 (%)', name_en: '%HP', mainValue: 750, subValue: 300, main_pos:[4, 5, 6] },
+      { id: '12103', 'name_zh-Hant': '攻擊力', 'name_zh-CN': '攻击力', name_en: 'ATK', mainValue: 79, subValue: 19, main_pos:[2] },
+      { id: '12102', 'name_zh-Hant': '攻擊力 (%)', 'name_zh-CN': '攻击力 (%)', name_en: '%ATK', mainValue: 750, subValue: 300, main_pos:[4, 5, 6] },
+      { id: '13103', 'name_zh-Hant': '防禦力', 'name_zh-CN': '防御力', name_en: 'DEF', mainValue: 46, subValue: 15, main_pos:[3] },
+      { id: '13102', 'name_zh-Hant': '防禦力 (%)', 'name_zh-CN': '防御力 (%)', name_en: '%DEF', mainValue: 1200, subValue: 480, main_pos:[4, 5, 6] },
+      { id: '23203', 'name_zh-Hant': '穿透值', 'name_zh-CN': '穿透值', name_en: 'PEN', mainValue: null, subValue: 9, main_pos:[] },
+      { id: '23103', 'name_zh-Hant': '穿透率 (%)', 'name_zh-CN': '穿透率 (%)', name_en: '%PEN', mainValue: 600, subValue: null, main_pos:[5] },
+      { id: '31402', 'name_zh-Hant': '異常掌控', 'name_zh-CN': '异常掌控', name_en: 'AM', mainValue: 750, subValue: null, main_pos:[6] },
+      { id: '31203', 'name_zh-Hant': '異常精通', 'name_zh-CN': '异常精通', name_en: 'AP', mainValue: 23, subValue: 9, main_pos:[4] },
+      { id: '21103', 'name_zh-Hant': '暴擊傷害 (%)', 'name_zh-CN': '暴击伤害 (%)', name_en: 'Crit DMG', mainValue: 1200, subValue: 480, main_pos:[4] },
+      { id: '20103', 'name_zh-Hant': '暴擊率 (%)', 'name_zh-CN': '暴击率 (%)', name_en: 'Crit Rate', mainValue: 600, subValue: 240, main_pos:[4] },
+      { id: '30502', 'name_zh-Hant': '能量自動回復 (%)', 'name_zh-CN': '能量自动回复 (%)', name_en: '%ER', mainValue: 1500, subValue: null, main_pos:[6] },
+      { id: '12202', 'name_zh-Hant': '衝擊力 (%)', 'name_zh-CN': '冲击力 (%)', name_en: 'Impact', mainValue: 450, subValue: null, main_pos:[6] },
+      { id: '31803', 'name_zh-Hant': '電屬性傷害加成 (%)', 'name_zh-CN': '电属性伤害加成 (%)', name_en: 'Electro', mainValue: 750, subValue: null, main_pos:[5] },
+      { id: '31903', 'name_zh-Hant': '乙太屬性傷害加成 (%)', 'name_zh-CN': '以太属性伤害加成 (%)', name_en: 'Ether', mainValue: 750, subValue: null, main_pos:[5] },
+      { id: '31603', 'name_zh-Hant': '火屬性傷害加成 (%)', 'name_zh-CN': '火属性伤害加成 (%)', name_en: 'Fire', mainValue: 750, subValue: null, main_pos:[5] },
+      { id: '31703', 'name_zh-Hant': '冰屬性傷害加成 (%)', 'name_zh-CN': '冰属性伤害加成 (%)', name_en: 'Ice', mainValue: 750, subValue: null, main_pos:[5] },
+      { id: '31503', 'name_zh-Hant': '物理屬性傷害加成 (%)', 'name_zh-CN': '物理属性伤害加成 (%)', name_en: 'Physic', mainValue: 750, subValue: null, main_pos:[5] }
+    ];
+
+    const discImages = {
+      "310": "https://storage.moegirl.tw/moegirl/commons/3/3b/驱动盘_啄木鸟电音.png",
+      "311": "https://storage.moegirl.tw/moegirl/commons/0/06/驱动盘_河豚电音.png",
+      "312": "https://storage.moegirl.tw/moegirl/commons/2/26/驱动盘_震星迪斯科.png",
+      "313": "https://storage.moegirl.tw/moegirl/commons/8/89/驱动盘_自由蓝调.png",
+      "314": "https://storage.moegirl.tw/moegirl/commons/4/46/驱动盘_激素朋克.png",
+      "315": "https://storage.moegirl.tw/moegirl/commons/7/77/驱动盘_灵魂摇滚.png",
+      "316": "https://storage.moegirl.tw/moegirl/commons/5/51/驱动盘_摇摆爵士.png",
+      "318": "https://storage.moegirl.tw/moegirl/commons/9/9e/驱动盘_混沌爵士.png",
+      "319": "https://storage.moegirl.tw/moegirl/commons/8/8f/驱动盘_原始朋克.png",
+      "322": "https://storage.moegirl.tw/moegirl/commons/5/56/驱动盘_炎狱重金属.png",
+      "323": "https://storage.moegirl.tw/moegirl/commons/0/0d/驱动盘_混沌重金属.png",
+      "324": "https://storage.moegirl.tw/moegirl/commons/a/a4/驱动盘_雷暴重金属.png",
+      "325": "https://storage.moegirl.tw/moegirl/commons/e/e0/驱动盘_极地重金属.png",
+      "326": "https://storage.moegirl.tw/moegirl/commons/5/54/驱动盘_獠牙重金属.png",
+      "327": "https://storage.moegirl.tw/moegirl/commons/7/73/驱动盘_折枝剑歌.png",
+      "328": "https://storage.moegirl.tw/moegirl/commons/c/cf/驱动盘_静听嘉音.png",
+      "329": "https://storage.moegirl.tw/moegirl/commons/3/39/驱动盘_如影相随.png",
+      "330": "https://storage.moegirl.tw/moegirl/commons/0/09/驱动盘_法厄同之歌.png",
+      "331": "https://storage.moegirl.tw/moegirl/commons/0/05/驱动盘_云岿如我.png",
+      "332": "https://storage.moegirl.tw/moegirl/commons/c/cc/驱动盘_山大王.png",
+      "333": "https://storage.moegirl.tw/moegirl/commons/6/67/驱动盘_拂晓生花.png",
+      "334": "https://storage.moegirl.tw/moegirl/commons/c/c2/驱动盘_月光骑士颂.png",
+      "335": "https://storage.moegirl.tw/moegirl/commons/2/27/驱动盘_沧浪行歌.png",
+      "336": "https://storage.moegirl.tw/moegirl/commons/1/18/驱动盘_流光咏叹.png",
+      "337": "https://cdn.gachabase.net/prod/zzz/assets/8070883109952236990_272_14050658.webp",
+      "338": "https://cdn.gachabase.net/prod/zzz/assets/8927972225216233150_272_14050658.webp"
+    };
+
+    let mainStatSelect;
+    let subStatSelects;
+    let currentFileContent = "";
+    let historyRecords = [];
+    
+    // 全域語言狀態（相容舊版，如果是舊的 "zh" 則自動轉為 "zh-Hant"）
+    let currentLang = localStorage.getItem('yoshunko_lang');
+    if (!currentLang || currentLang === 'zh') {
+      currentLang = 'zh-Hant';
+    }
+
+    // 全域計數器狀態（載入儲存的檔案編號）
+    let savedCounter = localStorage.getItem('yoshunko_file_counter');
+    let fileCounter = savedCounter ? parseInt(savedCounter) : 1;
+
+    // === 初始化與語言更新邏輯 ===
+    document.addEventListener('DOMContentLoaded', () => {
+      mainStatSelect = document.getElementById('main-stat-select');
+      subStatSelects = document.querySelectorAll('select[id^="sub-stat-select-"]');
+      
+      const langSwitcher = document.getElementById('lang-switcher');
+      langSwitcher.value = currentLang;
+      
+      langSwitcher.addEventListener('change', (e) => {
+        currentLang = e.target.value;
+        localStorage.setItem('yoshunko_lang', currentLang);
+        updateLanguageUI();
+      });
+
+      // 初始化計數器顯示
+      counterInput.value = fileCounter;
+
+      updateLanguageUI(); // 初次載入更新介面
+      loadHistory(); 
+    });
+
+    function updateLanguageUI() {
+      // 1. 更新純靜態文字
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (i18n[currentLang][key]) el.textContent = i18n[currentLang][key];
+      });
+
+      // 2. 更新 Placeholder
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (i18n[currentLang][key]) el.placeholder = i18n[currentLang][key];
+      });
+
+      // 3. 更新驅動盤下拉選單
+      const discSel = document.getElementById("disc-select");
+      Array.from(discSel.options).forEach(opt => {
+        if (opt.value === "") opt.textContent = i18n[currentLang].discPlaceholder;
+        else if (discNames[opt.value]) opt.textContent = discNames[opt.value][currentLang];
+      });
+
+      // 4. 更新階級與部位下拉選單的防呆文字
+      const posSel = document.getElementById("position");
+      if (posSel.options[0].value === "") posSel.options[0].textContent = i18n[currentLang].posPlaceholder;
+      
+      const rankSel = document.getElementById("rank");
+      Array.from(rankSel.options).forEach(opt => {
+        if(opt.value === "2") opt.textContent = i18n[currentLang].rankB;
+        if(opt.value === "3") opt.textContent = i18n[currentLang].rankA;
+        if(opt.value === "4") opt.textContent = i18n[currentLang].rankS;
+      });
+
+      // 5. 更新已生成的詞條下拉選單文字
+      const updateStatSelect = (select, isMain) => {
+        Array.from(select.options).forEach(opt => {
+          if (opt.value === "") {
+            opt.textContent = isMain ? i18n[currentLang].mainStatPlaceholder : i18n[currentLang].subStatPlaceholder;
+          } else {
+            const stat = stats.find(s => s.id === opt.value);
+            if(stat) opt.textContent = stat[`name_${currentLang}`];
+          }
+        });
+      };
+      updateStatSelect(mainStatSelect, true);
+      subStatSelects.forEach(sel => updateStatSelect(sel, false));
+
+      // 6. 重新渲染歷史紀錄
+      if(document.getElementById('view-history').style.display !== 'none') {
+        renderHistory();
+      }
+    }
+
+    const output = document.getElementById('output');
+    const imageContainer = document.getElementById('disc-image-container');
+    const imageElement = document.getElementById('disc-image');
+    const counterInput = document.getElementById('counter-input');
+    const resetCounterBtn = document.getElementById('reset-counter-btn');
+
+    // === 彈出視窗 (Modal) 邏輯 ===
+    const tutorialModal = document.getElementById('tutorial-modal');
+    document.getElementById('tutorial-btn').addEventListener('click', () => tutorialModal.classList.add('is-active'));
+    const closeModal = () => tutorialModal.classList.remove('is-active');
+    document.getElementById('tutorial-modal-bg').addEventListener('click', closeModal);
+    document.getElementById('tutorial-close-btn').addEventListener('click', closeModal);
+    document.getElementById('tutorial-confirm-btn').addEventListener('click', closeModal);
+
+    // === 分頁切換邏輯 ===
+    const tabBuilderBtn = document.getElementById('tab-builder-btn');
+    const tabHistoryBtn = document.getElementById('tab-history-btn');
+    const viewBuilder = document.getElementById('view-builder');
+    const viewHistory = document.getElementById('view-history');
+
+    function switchTab(tabName) {
+      if (tabName === 'builder') {
+        tabBuilderBtn.classList.add('is-active');
+        tabHistoryBtn.classList.remove('is-active');
+        viewBuilder.style.display = 'block';
+        viewHistory.style.display = 'none';
+      } else {
+        tabBuilderBtn.classList.remove('is-active');
+        tabHistoryBtn.classList.add('is-active');
+        viewBuilder.style.display = 'none';
+        viewHistory.style.display = 'block';
+        renderHistory(); 
+      }
+    }
+
+    tabBuilderBtn.addEventListener('click', () => switchTab('builder'));
+    tabHistoryBtn.addEventListener('click', () => switchTab('history'));
+
+    // === 計數器與記憶邏輯 ===
+    counterInput.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      if (!isNaN(val) && val >= 1) {
+        fileCounter = val;
+        localStorage.setItem('yoshunko_file_counter', fileCounter);
+      }
+    });
+
+    resetCounterBtn.addEventListener('click', () => {
+      fileCounter = 1;
+      counterInput.value = 1;
+      localStorage.setItem('yoshunko_file_counter', fileCounter);
+    });
+
+    // === 表單互動邏輯 ===
+    document.getElementById("disc-select").addEventListener("change", (event) => {
+      const selectedValue = event.target.value;
+      if (discImages[selectedValue]) {
+        imageElement.src = discImages[selectedValue];
+        imageContainer.style.display = "block";
+      } else {
+        imageContainer.style.display = "none";
+      }
+    });
+
+    document.getElementById("position").addEventListener("change", (event) => {
+      let mainStatOptions = `<option value="" disabled selected>${i18n[currentLang].mainStatPlaceholder}</option>`;
+      stats.forEach(stat => {
+        if (stat.mainValue === null) return;
+        if (stat.main_pos.includes(parseInt(event.target.value))) {
+          const option = document.createElement('option');
+          option.value = stat.id;
+          option.textContent = stat[`name_${currentLang}`];
+          mainStatOptions += option.outerHTML;
+        }
+      });
+      mainStatSelect.innerHTML = mainStatOptions;
+      mainStatSelect.disabled = false;
+
+      if (event.target.value === "1" || event.target.value === "2" || event.target.value === "3"){
+        mainStatSelect.selectedIndex = 1;
+        mainStatSelect.disabled = true;
+      }
+
+      let subStatOptions = `<option value="" disabled selected>${i18n[currentLang].subStatPlaceholder}</option>`;
+      stats.forEach(stat => {
+        if (stat.subValue === null) return;
+        const option = document.createElement('option');
+        option.value = stat.id;
+        option.textContent = stat[`name_${currentLang}`];
+        subStatOptions += option.outerHTML;
+      });
+      subStatSelects.forEach(select => {
+        select.innerHTML = subStatOptions;
+        select.selectedIndex = 0;
+      });
+    });
+
+    // === 生成、儲存與下載邏輯 (合併為一) ===
+    document.querySelector("#create-download-btn").addEventListener("click", () => {
+      const discSelect = document.getElementById("disc-select");
+      const positionSelect = document.getElementById("position");
+      const rankSelect = document.getElementById("rank");
+
+      if (discSelect.value === "" || positionSelect.value === "" || rankSelect.value === "" || mainStatSelect.value === "") {
+        output.textContent = i18n[currentLang].errorEmpty;
+        return;
+      }
+
+      const discId = parseInt(discSelect.value);
+      const position = parseInt(positionSelect.value);
+      const rank = parseInt(rankSelect.value);
+      const id = parseInt(`${discId}${rank}${position}`);
+      
+      const mainStatId = mainStatSelect.value;
+      const mainStat = stats.find(stat => stat.id === mainStatId);
+      const mainStatBaseValue = mainStat.mainValue;
+
+      const subStats = [];
+      const uiSubStatsRecord = []; 
+      let disc_sum = 0;
+
+      for (let i = 1; i <= 4; i++) {
+        const subStatId = document.getElementById(`sub-stat-select-${i}`).value;
+        if (subStatId) {
+          const subStatData = stats.find(stat => stat.id === subStatId);
+          const inputValStr = document.getElementById(`sub-stat-value-${i}`).value;
+          const userInputValue = inputValStr ? parseInt(inputValStr) : 0;
+          const subStatValue = userInputValue + 1; 
+          
+          disc_sum += subStatValue;
+          
+          if (!isNaN(subStatValue)) {
+            subStats.push({ key: parseInt(subStatId), base_value: subStatData.subValue, add_value: subStatValue });
+            uiSubStatsRecord.push({ id: subStatId, inputVal: userInputValue });
+          }
+        }
+      }
+
+      if (disc_sum < 8 || disc_sum > 9){
+        output.textContent = i18n[currentLang].errorSum;
+        return;
+      }
+
+      const subStatIds = subStats.map(stat => stat.key);
+      const uniqueSubStatIds = new Set(subStatIds);
+      if (uniqueSubStatIds.size !== subStatIds.length) {
+        output.textContent = i18n[currentLang].errorDup;
+        return;
+      }
+
+      const disc = {
+        id, level: 15, exp: 0, star: 1, lock: false,
+        properties: [{ key: parseInt(mainStatId), base_value: mainStatBaseValue, add_value: 0 }],
+        sub_properties: subStats
+      };
+
+      const zonData = ZON.stringify(disc, null, 4);
+      output.textContent = `${zonData}`;
+
+      // 儲存至歷史紀錄
+      const newRecord = {
+        timestamp: new Date().getTime(),
+        discId: discSelect.value,
+        rank: rankSelect.value,
+        position: positionSelect.value,
+        mainStatId: mainStatId,
+        subStats: uiSubStatsRecord,
+        zonData: zonData 
+      };
+      saveToHistory(newRecord);
+
+      // 直接觸發下載
+      const blob = new Blob([zonData], { type: "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileCounter.toString(); 
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      // 更新計數器並儲存
+      fileCounter++;
+      counterInput.value = fileCounter;
+      localStorage.setItem('yoshunko_file_counter', fileCounter);
+    });
+
+    // === 歷史紀錄存取與渲染邏輯 ===
+    function loadHistory() {
+      const saved = localStorage.getItem('yoshunko_disc_history');
+      if (saved) historyRecords = JSON.parse(saved);
+    }
+
+    function saveToHistory(record) {
+      historyRecords.unshift(record);
+      localStorage.setItem('yoshunko_disc_history', JSON.stringify(historyRecords));
+    }
+
+    document.getElementById('clear-history-btn').addEventListener('click', () => {
+      if(confirm(i18n[currentLang].confirmClear)) {
+        historyRecords = [];
+        localStorage.removeItem('yoshunko_disc_history');
+        renderHistory();
+      }
+    });
+
+    function renderHistory() {
+      const container = document.getElementById('history-container');
+      container.innerHTML = '';
+
+      if (historyRecords.length === 0) {
+        container.innerHTML = `<p class="has-text-centered has-text-grey">${i18n[currentLang].emptyHistory}</p>`;
+        return;
+      }
+
+      historyRecords.forEach((record, index) => {
+        const imgSrc = discImages[record.discId] || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+        
+        // 動態取得翻譯後的名稱
+        const localizedDiscName = discNames[record.discId] ? discNames[record.discId][currentLang] : "Unknown";
+        const mainStatData = stats.find(s => s.id === record.mainStatId);
+        const localizedMainStat = mainStatData ? mainStatData[`name_${currentLang}`] : "Unknown";
+        
+        let displayRank = i18n[currentLang].rankB;
+        if (record.rank === "3") displayRank = i18n[currentLang].rankA;
+        if (record.rank === "4") displayRank = i18n[currentLang].rankS;
+
+        let subStatsHtml = '';
+        record.subStats.forEach(sub => {
+          const sData = stats.find(s => s.id === sub.id);
+          const localizedSub = sData ? sData[`name_${currentLang}`] : "Unknown";
+          subStatsHtml += `<div><span class="is-size-6">${localizedSub} : ${sub.inputVal}</span></div>`;
+        });
+
+        const cardHtml = `
+          <div class="history-card">
+            <div class="columns is-mobile is-vcentered">
+              <div class="column is-narrow">
+                <div class="history-img-circle">
+                  <img src="${imgSrc}" alt="${localizedDiscName}">
+                </div>
+              </div>
+              <div class="column">
+                <div class="is-flex is-justify-content-space-between is-align-items-flex-end">
+                  <span class="is-size-4 has-text-weight-bold">${localizedDiscName}</span>
+                  <span class="is-size-6 has-text-weight-semibold">${record.position} ${i18n[currentLang].posUnit}</span>
+                </div>
+                <div class="history-divider"></div>
+                <div class="mb-2 is-flex is-align-items-center">
+                  <span class="is-size-5 has-text-weight-medium">${localizedMainStat}</span>
+                  <span class="tag is-warning is-light ml-3">${displayRank}</span>
+                </div>
+                <div class="history-divider"></div>
+                <div class="sub-stat-grid">
+                  ${subStatsHtml}
+                </div>
+                <div class="mt-3 has-text-right">
+                  <button class="button is-small is-info direct-download-btn" data-index="${index}">${i18n[currentLang].directDownload}</button>
+                  <button class="button is-small is-primary is-outlined apply-btn" data-index="${index}">${i18n[currentLang].applyBtn}</button>
+                  <button class="button is-small is-danger is-outlined delete-btn" data-index="${index}">${i18n[currentLang].deleteBtn}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        container.insertAdjacentHTML('beforeend', cardHtml);
+      });
+
+      document.querySelectorAll('.direct-download-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => directDownloadRecord(e.target.getAttribute('data-index')));
+      });
+      document.querySelectorAll('.apply-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => applyRecord(e.target.getAttribute('data-index')));
+      });
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => deleteRecord(e.target.getAttribute('data-index')));
+      });
+    }
+
+    function directDownloadRecord(index) {
+      const record = historyRecords[index];
+      if (!record.zonData) {
+        alert(i18n[currentLang].oldRecordAlert);
+        return;
+      }
+      const blob = new Blob([record.zonData], { type: "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileCounter.toString(); 
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      fileCounter++;
+      counterInput.value = fileCounter;
+      localStorage.setItem('yoshunko_file_counter', fileCounter);
+    }
+
+    function deleteRecord(index) {
+      historyRecords.splice(index, 1);
+      localStorage.setItem('yoshunko_disc_history', JSON.stringify(historyRecords));
+      renderHistory();
+    }
+
+    function applyRecord(index) {
+      const record = historyRecords[index];
+      switchTab('builder');
+
+      const discSelect = document.getElementById("disc-select");
+      discSelect.value = record.discId;
+      discSelect.dispatchEvent(new Event('change'));
+
+      document.getElementById("rank").value = record.rank;
+
+      const posSelect = document.getElementById("position");
+      posSelect.value = record.position;
+      posSelect.dispatchEvent(new Event('change'));
+
+      document.getElementById("main-stat-select").value = record.mainStatId;
+
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById(`sub-stat-select-${i}`).selectedIndex = 0;
+        document.getElementById(`sub-stat-value-${i}`).value = '';
+      }
+
+      record.subStats.forEach((sub, i) => {
+        const fieldIndex = i + 1;
+        document.getElementById(`sub-stat-select-${fieldIndex}`).value = sub.id;
+        document.getElementById(`sub-stat-value-${fieldIndex}`).value = sub.inputVal;
+      });
+
+      output.textContent = i18n[currentLang].successApply;
+    }
+
+    // === 重置面板 ===
+    document.getElementById("reset-button").addEventListener("click", () => {
+      document.getElementById("disc-select").selectedIndex = 0;
+      document.getElementById("position").selectedIndex = 0;
+      document.getElementById("rank").selectedIndex = 2;
+      imageContainer.style.display = "none";
+      imageElement.src = "";
+      mainStatSelect.innerHTML = `<option value="" disabled selected>${i18n[currentLang].mainStatPlaceholder}</option>`;
+      mainStatSelect.disabled = true;
+      subStatSelects.forEach(select => {
+        select.innerHTML = `<option value="" disabled selected>${i18n[currentLang].subStatPlaceholder}</option>`;
+        select.selectedIndex = 0;
+      });
+      document.getElementById("main-stat-value").value = '';
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById(`sub-stat-value-${i}`).value = '';
+      }
+      output.textContent = '';
+    });
+  </script>
+</body>
+
+</html>
