@@ -5,40 +5,43 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-  <title>yoshunko 驅動盤生成器</title>
+  <title>yoshunko 絕區零綜合生成器</title>
   <style>
-    /* 歷史紀錄卡片的自訂樣式 */
-    .history-card {
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      background: #fff;
-    }
-    .history-img-circle {
-      width: 100px;
-      height: 100px;
-      background-color: #8a8a8a;
-      border-radius: 50%;
+    /* 全局與共用樣式 */
+    .app-view { display: none; }
+    .app-view.is-active { display: block; }
+    .tab-content { display: none; }
+    .tab-content.is-active { display: block; }
+    .db-icon { width: 32px; height: 32px; object-fit: cover; border-radius: 50%; vertical-align: middle; }
+    
+    .has-error { color: #f14668; font-weight: bold; }
+    .has-success { color: #48c774; font-weight: bold; }
+
+    /* 右上角固定區塊 */
+    .top-right-controls {
+      position: absolute;
+      top: 15px;
+      right: 15px;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto;
+      gap: 10px;
+      z-index: 10;
     }
-    .history-img-circle img {
-      max-width: 80%;
-      max-height: 80%;
-      object-fit: contain;
-    }
-    .history-divider {
-      border-bottom: 2px solid #555;
-      margin: 4px 0 8px 0;
-    }
-    .sub-stat-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      column-gap: 1rem;
-      row-gap: 0.25rem;
+
+    /* 驅動盤歷史紀錄樣式 */
+    .history-card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: #fff; }
+    .history-img-circle { width: 100px; height: 100px; background-color: #8a8a8a; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+    .history-img-circle img { max-width: 80%; max-height: 80%; object-fit: contain; }
+    .history-divider { border-bottom: 2px solid #555; margin: 4px 0 8px 0; }
+    .sub-stat-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 1rem; row-gap: 0.25rem; }
+
+    /* 角色與邦布技能網格 */
+    .skill-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+
+    @media (max-width: 768px) {
+      .top-right-controls {
+        top: 10px; right: 10px; flex-direction: column; gap: 5px; align-items: flex-end;
+      }
+      .card-content-main { padding-top: 4.5rem !important; }
     }
   </style>
 </head>
@@ -46,22 +49,291 @@
 <body>
   <div class="container">
     <br/>
-    <div class="card">
-      <div class="card-content">
-        
-        <div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
-          <div style="width: 100px;"></div> <h1 class="title has-text-centered mb-0" data-i18n="title">yoshunko 驅動盤輪椅🦽</h1>
-          <div class="select is-small" style="width: 110px;">
-            <select id="lang-switcher">
-              <option value="zh-Hant">繁體中文</option>
-              <option value="zh-CN">简体中文</option>
-              <option value="en">English</option>
-            </select>
-          </div>
+    <div class="card" style="position: relative;">
+      
+      <div class="top-right-controls">
+        <button class="button is-small is-dark is-outlined" id="settings-btn">
+          <span data-i18n="settingsBtn">⚙️ 設定</span>
+        </button>
+        <div class="select is-small">
+          <select id="lang-switcher">
+            <option value="zh-Hant">繁體中文</option>
+            <option value="zh-CN">简体中文</option>
+            <option value="en">English</option>
+          </select>
         </div>
+      </div>
+
+      <div class="card-content card-content-main pt-6">
         
+        <h1 class="title has-text-centered mb-4" id="main-app-title">加載中...</h1>
+        
+        <div class="tabs is-centered is-boxed is-medium mb-5">
+          <ul>
+            <li class="main-tab is-active" data-tool="disc"><a data-i18n="tabDisc">驅動盤</a></li>
+            <li class="main-tab" data-tool="agent"><a data-i18n="tabAgent">代理人</a></li>
+            <li class="main-tab" data-tool="engine"><a data-i18n="tabEngine">音擎</a></li>
+            <li class="main-tab" data-tool="bangboo"><a data-i18n="tabBangboo">邦布</a></li>
+          </ul>
+        </div>
+
         <div class="has-text-centered mb-4">
           <button class="button is-small is-info is-light" id="tutorial-btn" data-i18n="tutorialBtn">📖 使用教學</button>
+        </div>
+
+        <div id="view-disc" class="app-view is-active content">
+          
+          <div class="tabs is-centered is-toggle is-small mb-4">
+            <ul>
+              <li class="is-active" id="disc-tab-builder-btn"><a data-i18n="tabBuilder">生成器</a></li>
+              <li id="disc-tab-history-btn"><a data-i18n="tabHistory">歷史紀錄</a></li>
+            </ul>
+          </div>
+
+          <div id="disc-builder-section">
+            <figure class="image is-128x128 mx-auto mb-4" id="disc-image-container" style="display: none; margin: 0 auto 1.5rem auto;">
+              <img id="disc-image" src="" alt="Disc Image">
+            </figure>
+
+            <div class="columns is-mobile is-vcentered is-multiline">
+              <div class="column is-narrow">
+                <div class="field">
+                  <div class="control"><span class="select">
+                    <select id="disc-select"><option value="" disabled selected data-i18n="discPlaceholder">加載資料庫中...</option></select>
+                  </span></div>
+                </div>
+              </div>
+              <div class="column is-narrow">
+                <div class="field">
+                  <div class="control"><span class="select">
+                    <select id="disc-rank">
+                      <option value="2" data-i18n="rankB">B級</option>
+                      <option value="3" data-i18n="rankA">A級</option>
+                      <option value="4" selected="selected" data-i18n="rankS">S級</option>
+                    </select>
+                  </span></div>
+                </div>
+              </div>
+              <div class="column is-narrow">
+                <div class="field">
+                  <div class="control"><span class="select">
+                    <select id="disc-position">
+                      <option value="" disabled selected data-i18n="posPlaceholder">部位</option>
+                      <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                      <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                    </select>
+                  </span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="field has-addons">
+              <p class="control"><span class="select"><select id="disc-main-stat"><option value="" disabled selected data-i18n="mainStatPlaceholder">請選擇主詞條</option></select></span></p>
+              <p class="control is-expanded"><input type="text" class="input" readonly data-i18n-placeholder="mainStatStatic" placeholder="主詞條為固定值"/></p>
+            </div>
+
+            <div class="field has-addons">
+              <p class="control"><span class="select"><select id="disc-sub-1"><option value="" disabled selected data-i18n="subStatPlaceholder"></option></select></span></p>
+              <p class="control is-expanded"><input type="number" id="disc-sub-val-1" class="input" data-i18n-placeholder="subStatInput_1" /></p>
+            </div>
+            <div class="field has-addons">
+              <p class="control"><span class="select"><select id="disc-sub-2"><option value="" disabled selected data-i18n="subStatPlaceholder"></option></select></span></p>
+              <p class="control is-expanded"><input type="number" id="disc-sub-val-2" class="input" data-i18n-placeholder="subStatInput_2" /></p>
+            </div>
+            <div class="field has-addons">
+              <p class="control"><span class="select"><select id="disc-sub-3"><option value="" disabled selected data-i18n="subStatPlaceholder"></option></select></span></p>
+              <p class="control is-expanded"><input type="number" id="disc-sub-val-3" class="input" data-i18n-placeholder="subStatInput_3" /></p>
+            </div>
+            <div class="field has-addons">
+              <p class="control"><span class="select"><select id="disc-sub-4"><option value="" disabled selected data-i18n="subStatPlaceholder"></option></select></span></p>
+              <p class="control is-expanded"><input type="number" id="disc-sub-val-4" class="input" data-i18n-placeholder="subStatInput_4" /></p>
+            </div>
+
+            <hr>
+            <div class="field has-addons mb-4">
+              <p class="control"><a class="button is-static" data-i18n="nextFileStr">下一個下載檔名：</a></p>
+              <p class="control"><input type="number" id="disc-counter-input" class="input" value="1" min="1" style="max-width: 100px;" /></p>
+              <p class="control"><button class="button is-warning" id="disc-reset-counter" data-i18n="resetCounterBtn">重置為 1</button></p>
+            </div>
+
+            <div class="buttons">
+              <button class="button is-primary" id="disc-create-btn" data-i18n="createDownloadBtn">下載並儲存</button>
+              <button class="button is-light" id="disc-reset-btn" data-i18n="resetBtn">重置面板</button>
+            </div>
+            <pre id="disc-output"></pre>
+          </div>
+
+          <div id="disc-history-section" style="display: none;">
+            <div class="has-text-right mb-3">
+              <button class="button is-small is-danger is-light" id="disc-clear-history-btn" data-i18n="clearHistoryBtn">清空所有紀錄</button>
+            </div>
+            <div id="disc-history-container" style="max-height: 50vh; overflow-y: auto;"></div>
+          </div>
+        </div>
+
+        <div id="view-agent" class="app-view content">
+          <div class="box has-background-light p-3 mb-4">
+            <div class="file has-name is-small is-fullwidth">
+              <label class="file-label">
+                <input class="file-input" type="file" id="agent-import-file" accept=".txt,.zon,*">
+                <span class="file-cta"><span class="file-icon">📁</span><span class="file-label" data-i18n="importBtn">匯入檔案...</span></span>
+                <span class="file-name" id="agent-import-file-name" data-i18n="noFileSelected">尚未選擇檔案...</span>
+              </label>
+            </div>
+            <p class="help" data-i18n="importHelpAgent">選擇已生成的角色設定檔，將自動解析檔名(ID)及內部數值。</p>
+          </div>
+
+          <div class="columns is-mobile is-vcentered">
+            <div class="column is-narrow">
+              <figure class="image is-48x48" id="agent-avatar-container" style="display: none;">
+                <img id="agent-avatar-preview" class="is-rounded" src="" alt="Avatar" style="border: 1px solid #ddd; object-fit: cover;">
+              </figure>
+            </div>
+            <div class="column">
+              <div class="field">
+                <label class="label is-small" data-i18n="charSelectLabel">選擇角色</label>
+                <div class="control"><div class="select is-fullwidth"><select id="agent-select"><option value="" disabled selected data-i18n="charPlaceholder">加載資料庫中...</option></select></div></div>
+              </div>
+            </div>
+            <div class="column is-one-third">
+              <div class="field">
+                <label class="label is-small" data-i18n="filenameLabel">下載檔名</label>
+                <div class="control"><input class="input" type="text" id="agent-filename-input" readonly placeholder="..." /></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="box">
+            <h3 class="title is-6 mb-3" data-i18n="baseInfo">基本資訊</h3>
+            <div class="columns is-mobile is-multiline">
+              <div class="column is-half-mobile is-one-third-tablet"><label class="label is-small" data-i18n="agentLevel">角色等級</label><input class="input" type="number" id="agent-level" value="60" min="1" max="60"></div>
+              <div class="column is-half-mobile is-one-third-tablet"><label class="label is-small" data-i18n="rank">晉升階級</label><input class="input" type="number" id="agent-rank" value="6" min="1" max="6"></div>
+              <div class="column is-half-mobile is-one-third-tablet"><label class="label is-small" data-i18n="passiveSkill">核心技強化</label><input class="input" type="number" id="agent-passive" value="6" min="1" max="6"></div>
+            </div>
+          </div>
+
+          <div class="box">
+            <h3 class="title is-6 mb-3" data-i18n="mindscape">影畫設定</h3>
+            <div class="columns is-multiline">
+              <div class="column is-one-third"><label class="label is-small" data-i18n="unlockedNum">解鎖數量</label><input class="input" type="number" id="agent-unlocked" value="6" min="0" max="6"></div>
+              <div class="column is-two-thirds">
+                <label class="label is-small" data-i18n="toggles">影畫開關</label>
+                <div class="control mt-2">
+                  <label class="checkbox mr-3"><input type="checkbox" id="agent-t-1"> 1</label>
+                  <label class="checkbox mr-3"><input type="checkbox" id="agent-t-2"> 2</label>
+                  <label class="checkbox mr-3"><input type="checkbox" id="agent-t-3"> 3</label>
+                  <label class="checkbox mr-3"><input type="checkbox" id="agent-t-4" checked> 4</label>
+                  <label class="checkbox mr-3"><input type="checkbox" id="agent-t-5" checked> 5</label>
+                  <label class="checkbox"><input type="checkbox" id="agent-t-6" checked> 6</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="box">
+            <h3 class="title is-6 mb-3" data-i18n="skillsTitle">技能等級</h3>
+            <div class="skill-grid">
+              <div><label class="label is-small" data-i18n="sCommon">普攻</label><input class="input is-small" type="number" id="agent-s-common" value="12" min="1" max="12"></div>
+              <div><label class="label is-small" data-i18n="sSpecial">特殊技</label><input class="input is-small" type="number" id="agent-s-special" value="12" min="1" max="12"></div>
+              <div><label class="label is-small" data-i18n="sEvade">閃避</label><input class="input is-small" type="number" id="agent-s-evade" value="12" min="1" max="12"></div>
+              <div><label class="label is-small" data-i18n="sCoop">連攜技</label><input class="input is-small" type="number" id="agent-s-coop" value="12" min="1" max="12"></div>
+              <div><label class="label is-small" data-i18n="sUnique">終結技</label><input class="input is-small" type="number" id="agent-s-unique" value="12" min="1" max="12"></div>
+              <div><label class="label is-small" data-i18n="sCore">核心技內置</label><input class="input is-small" type="number" id="agent-s-core" value="7" min="1" max="7"></div>
+              <div><label class="label is-small" data-i18n="sAssist">支援技</label><input class="input is-small" type="number" id="agent-s-assist" value="12" min="1" max="12"></div>
+            </div>
+          </div>
+          <hr>
+          <div class="buttons">
+            <button class="button is-primary" id="agent-create-btn" data-i18n="createDownloadBtn">下載並儲存</button>
+            <button class="button is-light" id="agent-reset-btn" data-i18n="resetBtn">重置面板</button>
+          </div>
+          <pre id="agent-output"></pre>
+        </div>
+
+        <div id="view-engine" class="app-view content">
+          <div class="columns is-mobile is-vcentered mb-4">
+            <div class="column is-narrow">
+              <figure class="image is-48x48" id="engine-avatar-container" style="display: none;">
+                <img id="engine-avatar-preview" src="" alt="Engine" style="border: 1px solid #ddd; object-fit: cover; border-radius: 4px;">
+              </figure>
+            </div>
+            <div class="column">
+              <div class="field">
+                <label class="label is-small" data-i18n="engineSelectLabel">選擇音擎</label>
+                <div class="control"><div class="select is-fullwidth"><select id="engine-select"><option value="" disabled selected data-i18n="enginePlaceholder">加載資料庫中...</option></select></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="box">
+            <h3 class="title is-6 mb-3" data-i18n="baseInfo">基本資訊</h3>
+            <div class="columns is-mobile is-multiline">
+              <div class="column is-half"><label class="label is-small" data-i18n="engineLevel">音擎等級</label><input class="input" type="number" id="engine-level" value="60" min="1" max="60"></div>
+              <div class="column is-half"><label class="label is-small" data-i18n="refine">音擎階級</label><input class="input" type="number" id="engine-refine" value="5" min="1" max="5"></div>
+            </div>
+          </div>
+
+          <hr>
+          <div class="field has-addons mb-4">
+            <p class="control"><a class="button is-static" data-i18n="nextFileStr">下一個下載檔名：</a></p>
+            <p class="control"><input type="number" id="engine-counter-input" class="input" value="1" min="1" style="max-width: 100px;" /></p>
+            <p class="control"><button class="button is-warning" id="engine-reset-counter" data-i18n="resetCounterBtn">重置為 1</button></p>
+          </div>
+
+          <div class="buttons">
+            <button class="button is-primary" id="engine-create-btn" data-i18n="createDownloadBtn">下載並儲存</button>
+            <button class="button is-light" id="engine-reset-btn" data-i18n="resetBtn">重置面板</button>
+          </div>
+          <pre id="engine-output"></pre>
+        </div>
+
+        <div id="view-bangboo" class="app-view content">
+          <div class="box has-background-light p-3 mb-4">
+            <div class="file has-name is-small is-fullwidth">
+              <label class="file-label">
+                <input class="file-input" type="file" id="bangboo-import-file" accept=".txt,.zon,*">
+                <span class="file-cta"><span class="file-icon">📁</span><span class="file-label" data-i18n="importBtn">匯入檔案...</span></span>
+                <span class="file-name" id="bangboo-import-file-name" data-i18n="noFileSelected">尚未選擇檔案...</span>
+              </label>
+            </div>
+            <p class="help" data-i18n="importHelpBangboo">選擇已生成的邦布設定檔，將自動解析檔名(ID)及內部數值。</p>
+          </div>
+
+          <div class="columns is-mobile is-vcentered">
+            <div class="column is-narrow">
+              <figure class="image is-48x48" id="bangboo-avatar-container" style="display: none;">
+                <img id="bangboo-avatar-preview" class="is-rounded" src="" alt="Avatar" style="border: 1px solid #ddd; object-fit: cover;">
+              </figure>
+            </div>
+            <div class="column">
+              <div class="field">
+                <label class="label is-small" data-i18n="bangbooSelectLabel">選擇邦布</label>
+                <div class="control"><div class="select is-fullwidth"><select id="bangboo-select"><option value="" disabled selected data-i18n="bangbooPlaceholder">加載資料庫中...</option></select></div></div>
+              </div>
+            </div>
+            <div class="column is-one-third">
+              <div class="field">
+                <label class="label is-small" data-i18n="filenameLabel">下載檔名</label>
+                <div class="control"><input class="input" type="text" id="bangboo-filename-input" readonly placeholder="..." /></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="box">
+            <h3 class="title is-6 mb-3" data-i18n="baseInfo">基本資訊</h3>
+            <div class="columns is-mobile is-multiline">
+              <div class="column is-half-mobile is-one-third-tablet"><label class="label is-small" data-i18n="bangbooLevel">邦布等級</label><input class="input" type="number" id="bangboo-level" value="60" min="1" max="60"></div>
+              <div class="column is-half-mobile is-one-third-tablet"><label class="label is-small" data-i18n="rank">晉升階級</label><input class="input" type="number" id="bangboo-rank" value="6" min="1" max="6"></div>
+              <div class="column is-half-mobile is-one-third-tablet"><label class="label is-small" data-i18n="star">內核更新等級</label><input class="input" type="number" id="bangboo-star" value="1" min="1" max="6"></div>
+            </div>
+          </div>
+          
+          <hr>
+          <div class="buttons">
+            <button class="button is-primary" id="bangboo-create-btn" data-i18n="createDownloadBtn">下載並儲存</button>
+            <button class="button is-light" id="bangboo-reset-btn" data-i18n="resetBtn">重置面板</button>
+          </div>
+          <pre id="bangboo-output"></pre>
         </div>
 
         <div id="tutorial-modal" class="modal">
@@ -72,10 +344,10 @@
               <button class="delete" aria-label="close" id="tutorial-close-btn"></button>
             </header>
             <section class="modal-card-body">
-              <p class="mb-2" data-i18n="tutorialStep1">生成新驅動盤時，請直接點擊「下載並儲存」。</p>
+              <p class="mb-2" id="tut-step-1">生成新設定時，請直接點擊「下載並儲存」。</p>
               <p class="mb-2" data-i18n="tutorialStep2">生成後的檔案放入：</p>
               <div class="notification is-light p-3">
-                <code class="is-size-6 has-text-weight-bold has-text-danger" data-i18n="tutorialPath">\Ubuntu\home\自訂名稱資料夾\yoshunko\state\player\1\equip</code>
+                <code class="is-size-6 has-text-weight-bold has-text-danger" id="tut-path">\Ubuntu\home\自訂名稱資料夾\yoshunko\state\player\1\</code>
               </div>
             </section>
             <footer class="modal-card-foot is-justify-content-flex-end">
@@ -84,195 +356,43 @@
           </div>
         </div>
 
-        <div class="tabs is-centered is-boxed is-medium">
-          <ul>
-            <li class="is-active" id="tab-builder-btn">
-              <a data-i18n="tabBuilder">生成器 (Builder)</a>
-            </li>
-            <li id="tab-history-btn">
-              <a data-i18n="tabHistory">歷史紀錄 (History)</a>
-            </li>
-          </ul>
-        </div>
-
-        <div id="view-builder" class="content">
-
-          <figure class="image is-128x128 mx-auto mb-4" id="disc-image-container" style="display: none; margin: 0 auto 1.5rem auto;">
-            <img id="disc-image" src="" alt="Disc Image">
-          </figure>
-
-          <div class="columns is-mobile is-vcentered is-multiline">
-            <div class="column is-narrow">
-              <div class="field">
-                <p class="control">
-                  <span class="select">
-                    <select id="disc-select">
-                      <option value="" disabled selected data-i18n="discPlaceholder">選擇驅動盤</option>
-                      <option value="310"></option>
-                      <option value="311"></option>
-                      <option value="312"></option>
-                      <option value="313"></option>
-                      <option value="314"></option>
-                      <option value="315"></option>
-                      <option value="316"></option>
-                      <option value="318"></option>
-                      <option value="319"></option>
-                      <option value="322"></option>
-                      <option value="323"></option>
-                      <option value="324"></option>
-                      <option value="325"></option>
-                      <option value="326"></option>
-                      <option value="327"></option>
-                      <option value="328"></option>
-                      <option value="329"></option>
-                      <option value="330"></option>
-                      <option value="331"></option>
-                      <option value="332"></option>
-                      <option value="333"></option>
-                      <option value="334"></option>
-                      <option value="335"></option>
-                      <option value="336"></option>
-                      <option value="337"></option>
-                      <option value="338"></option>
-                    </select>
-                  </span>
-                </p>
+        <div id="settings-modal" class="modal">
+          <div class="modal-background" id="settings-modal-bg"></div>
+          <div class="modal-card" style="width: 90%; max-width: 800px;">
+            <header class="modal-card-head">
+              <p class="modal-card-title has-text-weight-bold" data-i18n="settingsTitle">⚙️ 設定面板</p>
+              <button class="delete" aria-label="close" id="settings-close-btn"></button>
+            </header>
+            <section class="modal-card-body">
+              <div class="tabs is-boxed is-centered mb-3">
+                <ul><li class="is-active"><a><span id="settings-db-title">當前資料庫狀態</span></a></li></ul>
               </div>
-            </div>
-            <div class="column is-narrow">
-              <div class="field">
-                <p class="control">
-                  <span class="select">
-                    <select id="rank">
-                      <option value="2" data-i18n="rankB">B級</option>
-                      <option value="3" data-i18n="rankA">A級</option>
-                      <option value="4" selected="selected" data-i18n="rankS">S級</option>
-                    </select>
-                  </span>
-                </p>
+              <div class="is-flex is-justify-content-space-between is-align-items-stretch mb-3" style="gap: 10px;">
+                <div class="notification is-light flex-grow-1 mb-0" id="db-status-banner" style="flex: 1; padding: 10px 15px;">
+                  <span id="db-status-text" data-i18n="dbLoading">正在檢查資料庫狀態...</span>
+                </div>
+                <button class="button is-warning h-100" id="force-update-btn" style="height: auto;" data-i18n="forceUpdateBtn">強制更新</button>
               </div>
-            </div>
-            <div class="column is-narrow">
-              <div class="field">
-                <p class="control">
-                  <span class="select">
-                    <select id="position">
-                      <option value="" disabled selected data-i18n="posPlaceholder">部位</option>
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                      <option value="4">4</option>
-                      <option value="5">5</option>
-                      <option value="6">6</option>
-                    </select>
-                  </span>
-                </p>
+              
+              <div class="box mb-4" style="background: #fdfdfd; border: 1px dashed #ccc; padding: 1rem;">
+                <p class="is-size-7 mb-2 has-text-grey" data-i18n="manualUploadDesc">若連線失敗，可手動上傳 GachaBase 的 __data.json 檔案進行覆蓋：</p>
+                <div class="file has-name is-small">
+                  <label class="file-label">
+                    <input class="file-input" type="file" id="manual-file-input" accept=".json,.txt">
+                    <span class="file-cta"><span class="file-label" data-i18n="dbUploadBtn">選擇檔案…</span></span>
+                    <span class="file-name" id="manual-file-name">--</span>
+                  </label>
+                </div>
               </div>
-            </div>
+
+              <div class="table-container" style="max-height: 35vh; overflow-y: auto;">
+                <table class="table is-fullwidth is-striped is-hoverable">
+                  <thead><tr><th>ID</th><th data-i18n="dbThName">名稱</th><th data-i18n="dbThImage">圖片</th></tr></thead>
+                  <tbody id="db-table-body"></tbody>
+                </table>
+              </div>
+            </section>
           </div>
-
-          <div class="field has-addons">
-            <p class="control">
-              <span class="select">
-                <select id="main-stat-select">
-                  <option value="" disabled selected data-i18n="mainStatPlaceholder">請選擇主詞條</option>
-                </select>
-              </span>
-            </p>
-            <p class="control is-expanded">
-              <input type="text" id="main-stat-value" class="input" readonly data-i18n-placeholder="mainStatStatic" placeholder="主詞條為固定值"/>
-            </p>
-          </div>
-
-          <div class="field has-addons">
-            <p class="control">
-              <span class="select">
-                <select id="sub-stat-select-1">
-                  <option value="" disabled selected data-i18n="subStatPlaceholder">請選擇副詞條</option>
-                </select>
-              </span>
-            </p>
-            <p class="control is-expanded">
-              <input type="number" id="sub-stat-value-1" class="input" data-i18n-placeholder="subStatInput_1" placeholder="副詞條 1 強化次數" />
-            </p>
-          </div>
-
-          <div class="field has-addons">
-            <p class="control">
-              <span class="select">
-                <select id="sub-stat-select-2">
-                  <option value="" disabled selected data-i18n="subStatPlaceholder">請選擇副詞條</option>
-                </select>
-              </span>
-            </p>
-            <p class="control is-expanded">
-              <input type="number" id="sub-stat-value-2" class="input" data-i18n-placeholder="subStatInput_2" placeholder="副詞條 2 強化次數" />
-            </p>
-          </div>
-
-          <div class="field has-addons">
-            <p class="control">
-              <span class="select">
-                <select id="sub-stat-select-3">
-                  <option value="" disabled selected data-i18n="subStatPlaceholder">請選擇副詞條</option>
-                </select>
-              </span>
-            </p>
-            <p class="control is-expanded">
-              <input type="number" id="sub-stat-value-3" class="input" data-i18n-placeholder="subStatInput_3" placeholder="副詞條 3 強化次數" />
-            </p>
-          </div>
-
-          <div class="field has-addons">
-            <p class="control">
-              <span class="select">
-                <select id="sub-stat-select-4">
-                  <option value="" disabled selected data-i18n="subStatPlaceholder">請選擇副詞條</option>
-                </select>
-              </span>
-            </p>
-            <p class="control is-expanded">
-              <input type="number" id="sub-stat-value-4" class="input" data-i18n-placeholder="subStatInput_4" placeholder="副詞條 4 強化次數" />
-            </p>
-          </div>
-
-          <hr>
-
-          <div class="field mb-4">
-            <label class="checkbox has-text-danger has-text-weight-bold is-size-6">
-              <input type="checkbox" id="experimental-switch">
-              <span data-i18n="experimental">⚠️ 實驗性功能 (無視數值限制)</span>
-            </label>
-          </div>
-
-          <div class="field has-addons mb-4">
-            <p class="control">
-              <a class="button is-static" data-i18n="nextFileStr">下一個下載檔名：</a>
-            </p>
-            <p class="control">
-              <input type="number" id="counter-input" class="input" value="1" min="1" style="max-width: 100px;" />
-            </p>
-            <p class="control">
-              <button class="button is-warning" id="reset-counter-btn" data-i18n="resetCounterBtn">重置為 1</button>
-            </p>
-          </div>
-
-          <div class="buttons">
-            <button class="button is-primary" id="create-download-btn" data-i18n="createDownloadBtn">下載並儲存 (Download & Save)</button>
-            <button class="button is-light" id="reset-button" data-i18n="resetBtn">重置面板 (Reset)</button>
-          </div>
-          
-          <pre id="output"></pre>
-        </div>
-
-
-        <div id="view-history" class="content" style="display: none;">
-          <h2 class="title has-text-centered" data-i18n="historyTitle">已儲存的驅動盤紀錄</h2>
-          <div class="has-text-right mb-3">
-            <button class="button is-small is-danger is-light" id="clear-history-btn" data-i18n="clearHistoryBtn">清空所有紀錄</button>
-          </div>
-          <div id="history-container">
-            </div>
         </div>
 
       </div>
@@ -282,157 +402,126 @@
   <script type="module">
     import { ZON } from 'https://cdn.jsdelivr.net/npm/zzon';
 
-    // === 語言字典 i18n ===
+    // ==========================================
+    // 1. 字典與設定 (i18n & Configs)
+    // ==========================================
     const i18n = {
       'zh-Hant': {
-        title: "yoshunko 驅動盤輪椅🦽",
-        tutorialBtn: "📖 使用教學",
-        tutorialTitle: "📖 使用教學",
-        tutorialStep1: "生成新驅動盤時，請直接點擊「下載並儲存」。",
+        title_disc: "yoshunko 驅動盤輪椅🦽", title_agent: "yoshunko 角色輪椅🦽", title_engine: "yoshunko 音擎輪椅🦽", title_bangboo: "yoshunko 邦布輪椅🦽",
+        tabDisc: "驅動盤", tabAgent: "代理人", tabEngine: "音擎", tabBangboo: "邦布",
+        settingsBtn: "⚙️ 設定", settingsTitle: "⚙️ 設定面板",
+        tutorialBtn: "📖 使用教學", tutorialTitle: "📖 使用教學", tutorialConfirm: "確認",
         tutorialStep2: "生成後的檔案放入：",
-        tutorialPath: "\\Ubuntu\\home\\自訂名稱資料夾\\yoshunko\\state\\player\\1\\equip",
-        tutorialConfirm: "確認",
-        tabBuilder: "生成器 (Builder)",
-        tabHistory: "歷史紀錄 (History)",
-        discPlaceholder: "選擇驅動盤",
-        rankB: "B級", rankA: "A級", rankS: "S級",
-        posPlaceholder: "部位",
-        posUnit: "號位",
-        mainStatPlaceholder: "請選擇主詞條",
-        mainStatStatic: "主詞條為固定值",
-        subStatPlaceholder: "請選擇副詞條",
-        subStatInput_1: "副詞條 1 強化次數",
-        subStatInput_2: "副詞條 2 強化次數",
-        subStatInput_3: "副詞條 3 強化次數",
-        subStatInput_4: "副詞條 4 強化次數",
-        experimental: "⚠️ 實驗性功能 (無視數值限制)",
-        experimentalWarning: "【危險警告】\n開啟實驗性功能將無視所有數值限制（允許無限強化與重複詞條），這可能會導致遊戲崩潰、報錯或壞檔！\n\n確定要開啟嗎？",
-        nextFileStr: "下一個下載檔名：",
-        resetCounterBtn: "重置為 1",
-        createDownloadBtn: "下載並儲存 (Download & Save)",
-        resetBtn: "重置面板 (Reset)",
-        historyTitle: "已儲存的驅動盤紀錄",
-        clearHistoryBtn: "清空所有紀錄",
-        emptyHistory: "目前沒有任何紀錄。",
-        directDownload: "直接下載",
-        applyBtn: "套用此設定",
-        deleteBtn: "刪除",
-        errorEmpty: "請確保已選擇驅動盤、部位、等級和主詞條。",
-        errorSum: "所有副詞條的強化總次數（包含基礎）加起來必須為 4 或 5 次。",
-        errorDup: "副詞條不允許重複，請重新選擇。",
-        successApply: "已成功載入設定，請點擊「下載並儲存」以產生並下載檔案。",
-        oldRecordAlert: "此筆為舊版紀錄，無法直接下載。請點擊「套用此設定」後重新生成並下載！",
-        confirmClear: "確定要清空所有歷史紀錄嗎？"
+        dbLoading: "正在檢查當前資料庫...", dbSuccess: "✅ 資料庫更新成功", lastUpdatePrefix: "最後更新",
+        dbFallback: "⚠️ 無法連線，已使用本機舊版快取", dbError: "❌ 資料庫加載失敗 (請檢查網路或嘗試手動上傳)",
+        dbRetrying: "連線失敗，等待 3 秒後進行第 {n} 次重試...", manualUploadDesc: "若連線失敗或需要覆蓋，可手動上傳對應語言的 __data.json 檔案：",
+        dbUploadBtn: "選擇檔案…", forceUpdateBtn: "強制更新", dbThName: "名稱", dbThImage: "圖片",
+        createDownloadBtn: "下載並儲存", resetBtn: "重置面板", nextFileStr: "下一個下載檔名：", resetCounterBtn: "重置為 1",
+        importBtn: "匯入檔案...", noFileSelected: "尚未選擇檔案...",
+        importHelpAgent: "選擇已生成的角色設定檔，將自動解析檔名(ID)及內部數值。", importHelpBangboo: "選擇已生成的邦布設定檔，將自動解析檔名(ID)及內部數值。",
+        importSuccess: "✅ 檔案匯入成功！", importFail: "❌ 檔案解析失敗，請確認格式正確。",
+        baseInfo: "基本資訊", rank: "晉升階級 (上限 6)", passiveSkill: "核心技強化 (上限 6)",
+        // 驅動盤專用
+        tabBuilder: "生成器", tabHistory: "歷史紀錄", discPlaceholder: "選擇驅動盤", rankB: "B級", rankA: "A級", rankS: "S級",
+        posPlaceholder: "部位", posUnit: "號位", mainStatPlaceholder: "請選擇主詞條", mainStatStatic: "主詞條為固定值", subStatPlaceholder: "請選擇副詞條",
+        subStatInput_1: "副詞條 1 強化次數", subStatInput_2: "副詞條 2 強化次數", subStatInput_3: "副詞條 3 強化次數", subStatInput_4: "副詞條 4 強化次數",
+        historyTitle: "已儲存的驅動盤紀錄", clearHistoryBtn: "清空所有紀錄", emptyHistory: "目前沒有任何紀錄。",
+        directDownload: "直接下載", applyBtn: "套用", deleteBtn: "刪除", confirmClear: "確定要清空所有歷史紀錄嗎？",
+        oldRecordAlert: "此筆為舊版紀錄，無法直接下載。請點擊「套用」後重新生成！",
+        // 角色專用
+        charSelectLabel: "選擇角色 (將自動作為檔名)", charPlaceholder: "請選擇角色...", filenameLabel: "下載檔名",
+        agentLevel: "角色等級 (上限 60)", mindscape: "影畫設定", unlockedNum: "解鎖數量 (0~6)", toggles: "影畫開關",
+        skillsTitle: "技能等級", sCommon: "普攻 (max 12)", sSpecial: "特殊技 (max 12)", sEvade: "閃避 (max 12)", sCoop: "連攜技 (max 12)", sUnique: "終結技 (max 12)", sCore: "核心技內置 (max 7)", sAssist: "支援技 (max 12)",
+        // 音擎專用
+        engineSelectLabel: "選擇音擎", enginePlaceholder: "請選擇音擎...", engineLevel: "音擎等級 (上限 60)", refine: "音擎階級 (上限 5)",
+        // 邦布專用
+        bangbooSelectLabel: "選擇邦布 (將自動作為檔名)", bangbooPlaceholder: "請選擇邦布...", bangbooLevel: "邦布等級 (上限 60)", star: "內核更新等級 (上限 6)",
+        // 錯誤訊息
+        errEmpty: "❌ 違規：請確保已選擇對象與必填欄位！", errSum: "❌ 違規：驅動盤副詞條總強化次數須為 4 或 5 次！", errDup: "❌ 違規：驅動盤副詞條不允許重複！",
+        errNumLimit: "❌ 違規：輸入數值超出遊戲上限規定！", errToggleLocked: "❌ 違規：勾選了未解鎖的影畫！", errToggleConflict: "❌ 違規：影畫 1和4、2和5、3和6 不能同時勾選！"
       },
       'zh-CN': {
-        title: "yoshunko 驱动盘轮椅🦽",
-        tutorialBtn: "📖 使用教学",
-        tutorialTitle: "📖 使用教学",
-        tutorialStep1: "生成新驱动盘时，请直接点击「下载并保存」。",
+        title_disc: "yoshunko 驱动盘轮椅🦽", title_agent: "yoshunko 角色轮椅🦽", title_engine: "yoshunko 音擎轮椅🦽", title_bangboo: "yoshunko 邦布轮椅🦽",
+        tabDisc: "驱动盘", tabAgent: "代理人", tabEngine: "音擎", tabBangboo: "邦布",
+        settingsBtn: "⚙️ 设置", settingsTitle: "⚙️ 设置面板",
+        tutorialBtn: "📖 使用教学", tutorialTitle: "📖 使用教学", tutorialConfirm: "确认",
         tutorialStep2: "生成后的文件放入：",
-        tutorialPath: "\\Ubuntu\\home\\自定义名称文件夹\\yoshunko\\state\\player\\1\\equip",
-        tutorialConfirm: "确认",
-        tabBuilder: "生成器 (Builder)",
-        tabHistory: "历史记录 (History)",
-        discPlaceholder: "选择驱动盘",
-        rankB: "B级", rankA: "A级", rankS: "S级",
-        posPlaceholder: "部位",
-        posUnit: "号位",
-        mainStatPlaceholder: "请选择主词条",
-        mainStatStatic: "主词条为固定值",
-        subStatPlaceholder: "请选择副词条",
-        subStatInput_1: "副词条 1 强化次数",
-        subStatInput_2: "副词条 2 强化次数",
-        subStatInput_3: "副词条 3 强化次数",
-        subStatInput_4: "副词条 4 强化次数",
-        experimental: "⚠️ 实验性功能 (无视数值限制)",
-        experimentalWarning: "【危险警告】\n开启实验性功能将无视所有数值限制（允许无限强化与重复词条），这可能会导致游戏崩溃、报错或坏档！\n\n确定要开启吗？",
-        nextFileStr: "下一个下载文件名：",
-        resetCounterBtn: "重置为 1",
-        createDownloadBtn: "下载并保存 (Download & Save)",
-        resetBtn: "重置面板 (Reset)",
-        historyTitle: "已保存的驱动盘记录",
-        clearHistoryBtn: "清空所有记录",
-        emptyHistory: "目前没有任何记录。",
-        directDownload: "直接下载",
-        applyBtn: "应用此设置",
-        deleteBtn: "删除",
-        errorEmpty: "请确保已选择驱动盘、部位、等级和主词条。",
-        errorSum: "所有副词条的强化总次数（包含基础）加起来必须为 4 或 5 次。",
-        errorDup: "副词条不允许重复，请重新选择。",
-        successApply: "已成功加载设置，请点击「下载并保存」以产生并下载文件。",
-        oldRecordAlert: "此条为旧版记录，无法直接下载。请点击「应用此设置」后重新生成并下载！",
-        confirmClear: "确定要清空所有历史记录吗？"
+        dbLoading: "正在检查当前数据库...", dbSuccess: "✅ 数据库更新成功", lastUpdatePrefix: "最后更新",
+        dbFallback: "⚠️ 无法连接，已使用本地旧版缓存", dbError: "❌ 数据库加载失败 (请检查网络或尝试手动上传)",
+        dbRetrying: "连接失败，等待 3 秒后进行第 {n} 次重试...", manualUploadDesc: "若连接失败或需要覆盖，可手动上传对应语言的 __data.json 文件：",
+        dbUploadBtn: "选择文件…", forceUpdateBtn: "强制更新", dbThName: "名称", dbThImage: "图片",
+        createDownloadBtn: "下载并保存", resetBtn: "重置面板", nextFileStr: "下一个下载文件名：", resetCounterBtn: "重置为 1",
+        importBtn: "导入文件...", noFileSelected: "尚未选择文件...",
+        importHelpAgent: "选择已生成的角色配置文件，将自动解析文件名(ID)及内部数值。", importHelpBangboo: "选择已生成的邦布配置文件，将自动解析文件名(ID)及内部数值。",
+        importSuccess: "✅ 文件导入成功！", importFail: "❌ 文件解析失败，请确认格式正确。",
+        baseInfo: "基本信息", rank: "晋升阶级 (上限 6)", passiveSkill: "核心技强化 (上限 6)",
+        tabBuilder: "生成器", tabHistory: "历史记录", discPlaceholder: "选择驱动盘", rankB: "B级", rankA: "A级", rankS: "S级",
+        posPlaceholder: "部位", posUnit: "号位", mainStatPlaceholder: "请选择主词条", mainStatStatic: "主词条为固定值", subStatPlaceholder: "请选择副词条",
+        subStatInput_1: "副词条 1 强化次数", subStatInput_2: "副词条 2 强化次数", subStatInput_3: "副词条 3 强化次数", subStatInput_4: "副词条 4 强化次数",
+        historyTitle: "已保存的驱动盘记录", clearHistoryBtn: "清空所有记录", emptyHistory: "目前没有任何记录。",
+        directDownload: "直接下载", applyBtn: "应用", deleteBtn: "删除", confirmClear: "确定要清空所有历史记录吗？",
+        oldRecordAlert: "此条为旧版记录，无法直接下载。请点击「应用」后重新生成！",
+        charSelectLabel: "选择角色 (将自动作为文件名)", charPlaceholder: "请选择角色...", filenameLabel: "下载文件名",
+        agentLevel: "角色等级 (上限 60)", mindscape: "影画设置", unlockedNum: "解锁数量 (0~6)", toggles: "影画开关",
+        skillsTitle: "技能等级", sCommon: "普攻 (max 12)", sSpecial: "特殊技 (max 12)", sEvade: "闪避 (max 12)", sCoop: "连携技 (max 12)", sUnique: "终结技 (max 12)", sCore: "核心技内置 (max 7)", sAssist: "支援技 (max 12)",
+        engineSelectLabel: "选择音擎", enginePlaceholder: "请选择音擎...", engineLevel: "音擎等级 (上限 60)", refine: "音擎阶级 (上限 5)",
+        bangbooSelectLabel: "选择邦布 (将自动作为文件名)", bangbooPlaceholder: "请选择邦布...", bangbooLevel: "邦布等级 (上限 60)", star: "内核更新等级 (上限 6)",
+        errEmpty: "❌ 违规：请确保已选择对象与必填字段！", errSum: "❌ 违规：驱动盘副词条总强化次数须为 4 或 5 次！", errDup: "❌ 违规：驱动盘副词条不允许重复！",
+        errNumLimit: "❌ 违规：输入数值超出游戏上限规定！", errToggleLocked: "❌ 违规：勾选了未解锁的影画！", errToggleConflict: "❌ 违规：影画 1和4、2和5、3和6 不能同时勾选！"
       },
       'en': {
-        title: "yoshunko Disc Wheelchair🦽",
-        tutorialBtn: "📖 Tutorial",
-        tutorialTitle: "📖 Tutorial",
-        tutorialStep1: "When creating a new disc, just click 'Download & Save'.",
-        tutorialStep2: "Place the generated files into the following path:",
-        tutorialPath: "\\Ubuntu\\home\\[CustomFolder]\\yoshunko\\state\\player\\1\\equip",
-        tutorialConfirm: "Confirm",
-        tabBuilder: "Builder",
-        tabHistory: "History",
-        discPlaceholder: "Select disc",
-        rankB: "B", rankA: "A", rankS: "S",
-        posPlaceholder: "Pos",
-        posUnit: "",
-        mainStatPlaceholder: "Select main stat",
-        mainStatStatic: "Main Stat is static",
-        subStatPlaceholder: "Select sub stat",
-        subStatInput_1: "Sub Stat 1 Value",
-        subStatInput_2: "Sub Stat 2 Value",
-        subStatInput_3: "Sub Stat 3 Value",
-        subStatInput_4: "Sub Stat 4 Value",
-        experimental: "⚠️ Experimental Mode (Ignore Limits)",
-        experimentalWarning: "[DANGER WARNING]\nEnabling Experimental Mode will bypass all stat restrictions (allows unlimited enhancement and duplicate sub-stats). This may cause game crashes or save corruption!\n\nAre you sure you want to enable it?",
-        nextFileStr: "Next file name:",
-        resetCounterBtn: "Reset to 1",
-        createDownloadBtn: "Download & Save",
-        resetBtn: "Reset",
-        historyTitle: "Saved Disc Records",
-        clearHistoryBtn: "Clear All",
-        emptyHistory: "No records found.",
-        directDownload: "Direct DL",
-        applyBtn: "Apply",
-        deleteBtn: "Delete",
-        errorEmpty: "Please select disc, position, rank and main stat.",
-        errorSum: "Sub stats total value must be 4 or 5.",
-        errorDup: "Duplicate sub stats are not allowed.",
-        successApply: "Setting loaded successfully. Click 'Download & Save' to generate and download.",
-        oldRecordAlert: "Old record without ZON data. Please apply and recreate it!",
-        confirmClear: "Are you sure you want to clear all history?"
+        title_disc: "yoshunko Disc Builder🦽", title_agent: "yoshunko Agent Builder🦽", title_engine: "yoshunko Engine Builder🦽", title_bangboo: "yoshunko Bangboo Builder🦽",
+        tabDisc: "Disc", tabAgent: "Agent", tabEngine: "W-Engine", tabBangboo: "Bangboo",
+        settingsBtn: "⚙️ Settings", settingsTitle: "⚙️ Settings Panel",
+        tutorialBtn: "📖 Tutorial", tutorialTitle: "📖 Tutorial", tutorialConfirm: "Confirm",
+        tutorialStep2: "Place the generated files into:",
+        dbLoading: "Checking database...", dbSuccess: "✅ Database updated", lastUpdatePrefix: "Last Update",
+        dbFallback: "⚠️ Connection failed, using local cache", dbError: "❌ Database load failed",
+        dbRetrying: "Connection failed, retrying in 3s (Attempt {n})...", manualUploadDesc: "If connection fails, manually upload __data.json:",
+        dbUploadBtn: "Choose file…", forceUpdateBtn: "Force Update", dbThName: "Name", dbThImage: "Image",
+        createDownloadBtn: "Download & Save", resetBtn: "Reset", nextFileStr: "Next file name:", resetCounterBtn: "Reset to 1",
+        importBtn: "Import File...", noFileSelected: "No file selected...",
+        importHelpAgent: "Select a generated char file to auto-load ID and stats.", importHelpBangboo: "Select a generated bangboo file to auto-load ID and stats.",
+        importSuccess: "✅ File imported successfully!", importFail: "❌ Failed to parse file.",
+        baseInfo: "Basic Info", rank: "Rank (Max 6)", passiveSkill: "Core Enhance (Max 6)",
+        tabBuilder: "Builder", tabHistory: "History", discPlaceholder: "Select disc", rankB: "B", rankA: "A", rankS: "S",
+        posPlaceholder: "Pos", posUnit: "", mainStatPlaceholder: "Select main stat", mainStatStatic: "Main Stat is static", subStatPlaceholder: "Select sub stat",
+        subStatInput_1: "Sub Stat 1 Value", subStatInput_2: "Sub Stat 2 Value", subStatInput_3: "Sub Stat 3 Value", subStatInput_4: "Sub Stat 4 Value",
+        historyTitle: "Saved Disc Records", clearHistoryBtn: "Clear All", emptyHistory: "No records found.",
+        directDownload: "Direct DL", applyBtn: "Apply", deleteBtn: "Delete", confirmClear: "Clear all history?",
+        oldRecordAlert: "Old record. Please apply and recreate it!",
+        charSelectLabel: "Select Char (Filename)", charPlaceholder: "Select character...", filenameLabel: "Filename",
+        agentLevel: "Level (Max 60)", mindscape: "Mindscape", unlockedNum: "Unlocked (0~6)", toggles: "Toggles",
+        skillsTitle: "Skill Levels", sCommon: "Basic (max 12)", sSpecial: "Special (max 12)", sEvade: "Dodge (max 12)", sCoop: "Chain (max 12)", sUnique: "Ultimate (max 12)", sCore: "Core Inner (max 7)", sAssist: "Assist (max 12)",
+        engineSelectLabel: "Select W-Engine", enginePlaceholder: "Select Engine...", engineLevel: "Level (Max 60)", refine: "Refine (Max 5)",
+        bangbooSelectLabel: "Select Bangboo (Filename)", bangbooPlaceholder: "Select Bangboo...", bangbooLevel: "Level (Max 60)", star: "Core Level (Max 6)",
+        errEmpty: "❌ Error: Missing selections!", errSum: "❌ Error: Disc sub stats total must be 4 or 5!", errDup: "❌ Error: Disc duplicate sub stats!",
+        errNumLimit: "❌ Error: Input exceeds game limits!", errToggleLocked: "❌ Error: Checked locked mindscape!", errToggleConflict: "❌ Error: Mindscape conflict!"
       }
     };
 
-    const discNames = {
-      "310": { 'zh-Hant': "啄木鳥電音", 'zh-CN': "啄木鸟电音", en: "Woodpecker Electro" },
-      "311": { 'zh-Hant': "河豚電音", 'zh-CN': "河豚电音", en: "Puffer Electro" },
-      "312": { 'zh-Hant': "震星迪斯科", 'zh-CN': "震星迪斯科", en: "Shockstar Disco" },
-      "313": { 'zh-Hant': "自由藍調", 'zh-CN': "自由蓝调", en: "Freedom Blues" },
-      "314": { 'zh-Hant': "激素龐克", 'zh-CN': "激素朋克", en: "Hormone Punk" },
-      "315": { 'zh-Hant': "靈魂搖滾", 'zh-CN': "灵魂摇滚", en: "Soul Rock" },
-      "316": { 'zh-Hant': "搖擺爵士", 'zh-CN': "摇摆爵士", en: "Swing Jazz" },
-      "318": { 'zh-Hant': "混沌爵士", 'zh-CN': "混沌爵士", en: "Chaos Jazz" },
-      "319": { 'zh-Hant': "原始龐克", 'zh-CN': "原始朋克", en: "Proto Punk" },
-      "322": { 'zh-Hant': "炎獄重金屬", 'zh-CN': "炎狱重金属", en: "Inferno Metal" },
-      "323": { 'zh-Hant': "混沌重金屬", 'zh-CN': "混沌重金属", en: "Chaotic Metal" },
-      "324": { 'zh-Hant': "雷暴重金屬", 'zh-CN': "雷暴重金属", en: "Thunder Metal" },
-      "325": { 'zh-Hant': "極地重金屬", 'zh-CN': "极地重金属", en: "Polar Metal" },
-      "326": { 'zh-Hant': "獠牙重金屬", 'zh-CN': "獠牙重金属", en: "Fanged Metal" },
-      "327": { 'zh-Hant': "折枝劍歌", 'zh-CN': "折枝剑歌", en: "Branch & Blade Song" },
-      "328": { 'zh-Hant': "靜聽嘉音", 'zh-CN': "静听嘉音", en: "Astral Voice" },
-      "329": { 'zh-Hant': "如影相隨", 'zh-CN': "如影相随", en: "Shadow Harmony" },
-      "330": { 'zh-Hant': "法厄同之歌", 'zh-CN': "法厄同之歌", en: "Phaethon's Melody" },
-      "331": { 'zh-Hant': "雲巋如我", 'zh-CN': "云岿如我", en: "Yunkui Tales" },
-      "332": { 'zh-Hant': "山大王", 'zh-CN': "山大王", en: "King of the Summit" },
-      "333": { 'zh-Hant': "拂曉生花", 'zh-CN': "拂晓生花", en: "Dawn's Bloom" },
-      "334": { 'zh-Hant': "月光騎士頌", 'zh-CN': "月光骑士颂", en: "Moonlight Lullaby" },
-      "335": { 'zh-Hant': "滄浪行歌", 'zh-CN': "沧浪行歌", en: "White Water Ballad" },
-      "336": { 'zh-Hant': "流光詠嘆", 'zh-CN': "流光咏叹", en: "Shining Aria" },
-      "337": { 'zh-Hant': "雪兔夢遊仙境", 'zh-CN': "雪兔梦游仙境", en: "Bunny in Wonderland" },
-      "338": { 'zh-Hant': "囚徒手記", 'zh-CN': "囚徒手记", en: "Notes From the Chained" }
+    const TUTORIAL_PATHS = {
+      disc: "\\Ubuntu\\home\\自訂名稱資料夾\\yoshunko\\state\\player\\1\\equip",
+      agent: "\\Ubuntu\\home\\自訂名稱資料夾\\yoshunko\\state\\player\\1\\avatar",
+      engine: "\\Ubuntu\\home\\自訂名稱資料夾\\yoshunko\\state\\player\\1\\weapon",
+      bangboo: "\\Ubuntu\\home\\自訂名稱資料夾\\yoshunko\\state\\player\\1\\buddy"
+    };
+
+    const TUTORIAL_STEPS = {
+      disc: { 'zh-Hant': "生成新驅動盤時，請直接點擊「下載並儲存」。", 'zh-CN': "生成新驱动盘时，请直接点击「下载并保存」。", 'en': "Click 'Download & Save' for Discs." },
+      agent: { 'zh-Hant': "生成新角色時，檔名會自動對應角色 ID。", 'zh-CN': "生成新角色时，文件名会自动对应角色 ID。", 'en': "Filename will automatically match Agent ID." },
+      engine: { 'zh-Hant': "生成新音擎時，請直接點擊「下載並儲存」。", 'zh-CN': "生成新音擎时，请直接点击「下载并保存」。", 'en': "Click 'Download & Save' for W-Engines." },
+      bangboo: { 'zh-Hant': "生成新邦布時，檔名會自動對應邦布 ID。", 'zh-CN': "生成新邦布时，文件名会自动对应邦布 ID。", 'en': "Filename will automatically match Bangboo ID." }
+    };
+
+    // 採用高容錯 Regex：適用於夾帶 false, true, 空字串 等不規則情況
+    const UNIVERSAL_REGEX = /"(\d{3,5})"\s*,\s*(?:(?:true|false|null|\d+|"")\s*,\s*)*"([^"]+)"\s*,\s*(?:(?:true|false|null|\d+|"")\s*,\s*)*"(https:\/\/[^"]+\.webp)"/g;
+
+    const DB_CONFIG = {
+      disc: { url: 'https://zzz.gachabase.net/drive-discs/__data.json', regex: UNIVERSAL_REGEX, blacklist: [] },
+      agent: { url: 'https://zzz.gachabase.net/agents/__data.json', regex: UNIVERSAL_REGEX, blacklist: ['101', '102', '103', '2000', '2004', '2010', '2020', '2021', '2030', '2050', '2052'] },
+      engine: { url: 'https://zzz.gachabase.net/w-engines/__data.json', regex: UNIVERSAL_REGEX, blacklist: ['11102', '12101', '12202', '20103', '21103', '23103', '30502', '31203', '31402', '13102'] },
+      bangboo: { url: 'https://zzz.gachabase.net/bangboo/__data.json', regex: UNIVERSAL_REGEX, blacklist: [] }
     };
 
     const stats = [
@@ -451,503 +540,630 @@
       { id: '30502', 'name_zh-Hant': '能量自動回復 (%)', 'name_zh-CN': '能量自动回复 (%)', name_en: '%ER', mainValue: 1500, subValue: null, main_pos:[6] },
       { id: '12202', 'name_zh-Hant': '衝擊力 (%)', 'name_zh-CN': '冲击力 (%)', name_en: 'Impact', mainValue: 450, subValue: null, main_pos:[6] },
       { id: '31803', 'name_zh-Hant': '電屬性傷害加成 (%)', 'name_zh-CN': '电属性伤害加成 (%)', name_en: 'Electro', mainValue: 750, subValue: null, main_pos:[5] },
-      { id: '31903', 'name_zh-Hant': '乙太屬性傷害加成 (%)', 'name_zh-CN': '以太属性伤害加成 (%)', name_en: 'Ether', mainValue: 750, subValue: null, main_pos:[5] },
+      { id: '31903', 'name_zh-Hant': '以太屬性傷害加成 (%)', 'name_zh-CN': '以太属性伤害加成 (%)', name_en: 'Ether', mainValue: 750, subValue: null, main_pos:[5] },
       { id: '31603', 'name_zh-Hant': '火屬性傷害加成 (%)', 'name_zh-CN': '火属性伤害加成 (%)', name_en: 'Fire', mainValue: 750, subValue: null, main_pos:[5] },
       { id: '31703', 'name_zh-Hant': '冰屬性傷害加成 (%)', 'name_zh-CN': '冰属性伤害加成 (%)', name_en: 'Ice', mainValue: 750, subValue: null, main_pos:[5] },
       { id: '31503', 'name_zh-Hant': '物理屬性傷害加成 (%)', 'name_zh-CN': '物理属性伤害加成 (%)', name_en: 'Physic', mainValue: 750, subValue: null, main_pos:[5] }
     ];
 
-    const discImages = {
-      "310": "https://storage.moegirl.tw/moegirl/commons/3/3b/驱动盘_啄木鸟电音.png",
-      "311": "https://storage.moegirl.tw/moegirl/commons/0/06/驱动盘_河豚电音.png",
-      "312": "https://storage.moegirl.tw/moegirl/commons/2/26/驱动盘_震星迪斯科.png",
-      "313": "https://storage.moegirl.tw/moegirl/commons/8/89/驱动盘_自由蓝调.png",
-      "314": "https://storage.moegirl.tw/moegirl/commons/4/46/驱动盘_激素朋克.png",
-      "315": "https://storage.moegirl.tw/moegirl/commons/7/77/驱动盘_灵魂摇滚.png",
-      "316": "https://storage.moegirl.tw/moegirl/commons/5/51/驱动盘_摇摆爵士.png",
-      "318": "https://storage.moegirl.tw/moegirl/commons/9/9e/驱动盘_混沌爵士.png",
-      "319": "https://storage.moegirl.tw/moegirl/commons/8/8f/驱动盘_原始朋克.png",
-      "322": "https://storage.moegirl.tw/moegirl/commons/5/56/驱动盘_炎狱重金属.png",
-      "323": "https://storage.moegirl.tw/moegirl/commons/0/0d/驱动盘_混沌重金属.png",
-      "324": "https://storage.moegirl.tw/moegirl/commons/a/a4/驱动盘_雷暴重金属.png",
-      "325": "https://storage.moegirl.tw/moegirl/commons/e/e0/驱动盘_极地重金属.png",
-      "326": "https://storage.moegirl.tw/moegirl/commons/5/54/驱动盘_獠牙重金属.png",
-      "327": "https://storage.moegirl.tw/moegirl/commons/7/73/驱动盘_折枝剑歌.png",
-      "328": "https://storage.moegirl.tw/moegirl/commons/c/cf/驱动盘_静听嘉音.png",
-      "329": "https://storage.moegirl.tw/moegirl/commons/3/39/驱动盘_如影相随.png",
-      "330": "https://storage.moegirl.tw/moegirl/commons/0/09/驱动盘_法厄同之歌.png",
-      "331": "https://storage.moegirl.tw/moegirl/commons/0/05/驱动盘_云岿如我.png",
-      "332": "https://storage.moegirl.tw/moegirl/commons/c/cc/驱动盘_山大王.png",
-      "333": "https://storage.moegirl.tw/moegirl/commons/6/67/驱动盘_拂晓生花.png",
-      "334": "https://storage.moegirl.tw/moegirl/commons/c/c2/驱动盘_月光骑士颂.png",
-      "335": "https://storage.moegirl.tw/moegirl/commons/2/27/驱动盘_沧浪行歌.png",
-      "336": "https://storage.moegirl.tw/moegirl/commons/1/18/驱动盘_流光咏叹.png",
-      "337": "https://cdn.gachabase.net/prod/zzz/assets/8070883109952236990_272_14050658.webp",
-      "338": "https://cdn.gachabase.net/prod/zzz/assets/8927972225216233150_272_14050658.webp"
+    // ==========================================
+    // 2. 狀態管理
+    // ==========================================
+    let appState = {
+      lang: localStorage.getItem('yoshunko_all_lang') || 'zh-Hant',
+      activeTool: localStorage.getItem('yoshunko_active_tool') || 'disc',
+      discCounter: parseInt(localStorage.getItem('yoshunko_disc_counter') || '1'),
+      engineCounter: parseInt(localStorage.getItem('yoshunko_engine_counter') || '1'),
+      discHistory: JSON.parse(localStorage.getItem('yoshunko_disc_history') || '[]'),
+      dbs: { disc: {}, agent: {}, engine: {}, bangboo: {} },
+      dbDates: { disc: {}, agent: {}, engine: {}, bangboo: {} },
+      status: { type: 'light', textKey: 'dbLoading' }
+    };
+    if (appState.lang === 'zh' || appState.lang === 'zh-TW') appState.lang = 'zh-Hant';
+
+    // 初始化讀取全快取
+    ['disc', 'agent', 'engine', 'bangboo'].forEach(tool => {
+      appState.dbs[tool] = JSON.parse(localStorage.getItem(`yoshunko_${tool}_db_data`) || '{"zh-Hant":[], "zh-CN":[], "en":[]}');
+      appState.dbDates[tool] = JSON.parse(localStorage.getItem(`yoshunko_${tool}_db_dates`) || '{"zh-Hant":"", "zh-CN":"", "en":""}');
+      // 啟動時清一次黑名單
+      if(DB_CONFIG[tool].blacklist.length > 0) {
+        ['zh-Hant', 'zh-CN', 'en'].forEach(lang => {
+           if(appState.dbs[tool][lang]) {
+             appState.dbs[tool][lang] = appState.dbs[tool][lang].filter(item => !DB_CONFIG[tool].blacklist.includes(item.id));
+             localStorage.setItem(`yoshunko_${tool}_db_data`, JSON.stringify(appState.dbs[tool]));
+           }
+        });
+      }
+    });
+
+    // DOM 元素快取
+    const els = {
+      langSwitcher: document.getElementById('lang-switcher'),
+      appTitle: document.getElementById('main-app-title'),
+      views: document.querySelectorAll('.app-view'),
+      mainTabs: document.querySelectorAll('.main-tab'),
+      tutModal: document.getElementById('tutorial-modal'),
+      setModal: document.getElementById('settings-modal'),
+      dbTable: document.getElementById('db-table-body'),
+      settingsDbTitle: document.getElementById('settings-db-title'),
+      disc: {
+        sel: document.getElementById('disc-select'), img: document.getElementById('disc-image'), imgCont: document.getElementById('disc-image-container'),
+        rank: document.getElementById('disc-rank'), pos: document.getElementById('disc-position'), mainStat: document.getElementById('disc-main-stat'),
+        subs: [1,2,3,4].map(i => document.getElementById(`disc-sub-${i}`)), subVals: [1,2,3,4].map(i => document.getElementById(`disc-sub-val-${i}`)),
+        counter: document.getElementById('disc-counter-input'), out: document.getElementById('disc-output')
+      },
+      agent: {
+        sel: document.getElementById('agent-select'), img: document.getElementById('agent-avatar-preview'), imgCont: document.getElementById('agent-avatar-container'),
+        fileIn: document.getElementById('agent-filename-input'), lvl: document.getElementById('agent-level'), rank: document.getElementById('agent-rank'),
+        pas: document.getElementById('agent-passive'), unl: document.getElementById('agent-unlocked'),
+        toggles: [1,2,3,4,5,6].map(i => document.getElementById(`agent-t-${i}`)),
+        skills: ['common','special','evade','coop','unique','core','assist'].reduce((acc, k) => { acc[k] = document.getElementById(`agent-s-${k}`); return acc; }, {}),
+        out: document.getElementById('agent-output')
+      },
+      engine: {
+        sel: document.getElementById('engine-select'), img: document.getElementById('engine-avatar-preview'), imgCont: document.getElementById('engine-avatar-container'),
+        lvl: document.getElementById('engine-level'), ref: document.getElementById('engine-refine'),
+        counter: document.getElementById('engine-counter-input'), out: document.getElementById('engine-output')
+      },
+      bangboo: {
+        sel: document.getElementById('bangboo-select'), img: document.getElementById('bangboo-avatar-preview'), imgCont: document.getElementById('bangboo-avatar-container'),
+        fileIn: document.getElementById('bangboo-filename-input'), lvl: document.getElementById('bangboo-level'), rank: document.getElementById('bangboo-rank'), star: document.getElementById('bangboo-star'),
+        out: document.getElementById('bangboo-output')
+      }
     };
 
-    let mainStatSelect;
-    let subStatSelects;
-    let historyRecords = [];
-    
-    // 全域語言狀態
-    let currentLang = localStorage.getItem('yoshunko_lang');
-    if (!currentLang || currentLang === 'zh') {
-      currentLang = 'zh-Hant';
-    }
-
-    // 全域計數器狀態
-    let savedCounter = localStorage.getItem('yoshunko_file_counter');
-    let fileCounter = savedCounter ? parseInt(savedCounter) : 1;
-
-    // === 初始化與語言更新邏輯 ===
-    document.addEventListener('DOMContentLoaded', () => {
-      mainStatSelect = document.getElementById('main-stat-select');
-      subStatSelects = document.querySelectorAll('select[id^="sub-stat-select-"]');
+    // ==========================================
+    // 3. 啟動與核心介面邏輯
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', async () => {
+      els.langSwitcher.value = appState.lang;
+      els.disc.counter.value = appState.discCounter;
+      els.engine.counter.value = appState.engineCounter;
       
-      const langSwitcher = document.getElementById('lang-switcher');
-      langSwitcher.value = currentLang;
-      
-      langSwitcher.addEventListener('change', (e) => {
-        currentLang = e.target.value;
-        localStorage.setItem('yoshunko_lang', currentLang);
-        updateLanguageUI();
-      });
-
-      // 初始化計數器顯示
-      document.getElementById('counter-input').value = fileCounter;
-
-      // === 實驗性開關警告邏輯 ===
-      const expSwitch = document.getElementById('experimental-switch');
-      expSwitch.addEventListener('click', (e) => {
-        if (e.target.checked) {
-          const confirmed = confirm(i18n[currentLang].experimentalWarning);
-          if (!confirmed) {
-            e.preventDefault(); // 使用者按取消，阻止打勾
-          }
-        }
-      });
-
-      updateLanguageUI(); // 初次載入更新介面
-      loadHistory(); 
+      switchActiveTool(appState.activeTool, false);
+      setupGlobalListeners();
+      setupToolSpecificListeners();
     });
 
-    function updateLanguageUI() {
-      // 更新純靜態文字
+    async function switchActiveTool(tool, triggerDB = true) {
+      appState.activeTool = tool;
+      localStorage.setItem('yoshunko_active_tool', tool);
+
+      els.views.forEach(v => v.classList.remove('is-active'));
+      document.getElementById(`view-${tool}`).classList.add('is-active');
+      
+      els.mainTabs.forEach(t => {
+        t.classList.toggle('is-active', t.dataset.tool === tool);
+      });
+
+      els.appTitle.textContent = i18n[appState.lang][`title_${tool}`];
+      els.settingsDbTitle.textContent = `${i18n[appState.lang][`tab${tool.charAt(0).toUpperCase() + tool.slice(1)}`]} - 資料庫`;
+      document.getElementById('tut-path').textContent = TUTORIAL_PATHS[tool];
+      document.getElementById('tut-step-1').textContent = TUTORIAL_STEPS[tool][appState.lang] || TUTORIAL_STEPS[tool]['zh-Hant'];
+
+      updateAllUIText();
+
+      if (triggerDB) {
+        await checkAndLoadDB(tool, appState.lang);
+        populateSelectDropdown(tool);
+        renderSettingsTable(tool);
+      } else {
+        checkAndLoadDB(tool, appState.lang).then(() => {
+          populateSelectDropdown(tool);
+          if(tool === 'disc') { populateDiscFormDefs(); renderDiscHistory(); }
+          renderSettingsTable(tool);
+        });
+      }
+    }
+
+    function updateAllUIText() {
+      const dict = i18n[appState.lang];
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (i18n[currentLang][key]) el.textContent = i18n[currentLang][key];
+        if (dict[key]) el.textContent = dict[key];
       });
-
-      // 更新 Placeholder
       document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
-        if (i18n[currentLang][key]) el.placeholder = i18n[currentLang][key];
+        if (dict[key]) el.placeholder = dict[key];
       });
-
-      // 更新驅動盤下拉選單
-      const discSel = document.getElementById("disc-select");
-      Array.from(discSel.options).forEach(opt => {
-        if (opt.value === "") opt.textContent = i18n[currentLang].discPlaceholder;
-        else if (discNames[opt.value]) opt.textContent = discNames[opt.value][currentLang];
-      });
-
-      // 更新階級與部位下拉選單的防呆文字
-      const posSel = document.getElementById("position");
-      if (posSel.options[0].value === "") posSel.options[0].textContent = i18n[currentLang].posPlaceholder;
       
-      const rankSel = document.getElementById("rank");
-      Array.from(rankSel.options).forEach(opt => {
-        if(opt.value === "2") opt.textContent = i18n[currentLang].rankB;
-        if(opt.value === "3") opt.textContent = i18n[currentLang].rankA;
-        if(opt.value === "4") opt.textContent = i18n[currentLang].rankS;
-      });
-
-      // 更新已生成的詞條下拉選單文字
-      const updateStatSelect = (select, isMain) => {
-        Array.from(select.options).forEach(opt => {
-          if (opt.value === "") {
-            opt.textContent = isMain ? i18n[currentLang].mainStatPlaceholder : i18n[currentLang].subStatPlaceholder;
-          } else {
-            const stat = stats.find(s => s.id === opt.value);
-            if(stat) opt.textContent = stat[`name_${currentLang}`];
-          }
-        });
-      };
-      if (mainStatSelect) updateStatSelect(mainStatSelect, true);
-      if (subStatSelects) subStatSelects.forEach(sel => updateStatSelect(sel, false));
-
-      // 重新渲染歷史紀錄
-      if(document.getElementById('view-history').style.display !== 'none') {
-        renderHistory();
-      }
+      document.getElementById('tut-step-1').textContent = TUTORIAL_STEPS[appState.activeTool][appState.lang] || TUTORIAL_STEPS[appState.activeTool]['zh-Hant'];
+      els.appTitle.textContent = i18n[appState.lang][`title_${appState.activeTool}`];
+      
+      populateSelectDropdown(appState.activeTool);
+      if(appState.activeTool === 'disc') populateDiscFormDefs();
     }
 
-    const output = document.getElementById('output');
-    const imageContainer = document.getElementById('disc-image-container');
-    const imageElement = document.getElementById('disc-image');
-    const counterInput = document.getElementById('counter-input');
-    const resetCounterBtn = document.getElementById('reset-counter-btn');
+    // ==========================================
+    // 4. 資料庫網路與解析邏輯
+    // ==========================================
+    async function checkAndLoadDB(tool, lang, forceUpdate = false) {
+      const now = new Date();
+      const todayDateStr = now.toLocaleDateString('zh-TW');
+      const fullTimeStr = now.toLocaleString('zh-TW', { hour12: false });
+      
+      updateDbStatusUI('light', 'dbLoading');
 
-    // === 彈出視窗 (Modal) 邏輯 ===
-    const tutorialModal = document.getElementById('tutorial-modal');
-    document.getElementById('tutorial-btn').addEventListener('click', () => tutorialModal.classList.add('is-active'));
-    const closeModal = () => tutorialModal.classList.remove('is-active');
-    document.getElementById('tutorial-modal-bg').addEventListener('click', closeModal);
-    document.getElementById('tutorial-close-btn').addEventListener('click', closeModal);
-    document.getElementById('tutorial-confirm-btn').addEventListener('click', closeModal);
-
-    // === 分頁切換邏輯 ===
-    const tabBuilderBtn = document.getElementById('tab-builder-btn');
-    const tabHistoryBtn = document.getElementById('tab-history-btn');
-    const viewBuilder = document.getElementById('view-builder');
-    const viewHistory = document.getElementById('view-history');
-
-    function switchTab(tabName) {
-      if (tabName === 'builder') {
-        tabBuilderBtn.classList.add('is-active');
-        tabHistoryBtn.classList.remove('is-active');
-        viewBuilder.style.display = 'block';
-        viewHistory.style.display = 'none';
-      } else {
-        tabBuilderBtn.classList.remove('is-active');
-        tabHistoryBtn.classList.add('is-active');
-        viewBuilder.style.display = 'none';
-        viewHistory.style.display = 'block';
-        renderHistory(); 
-      }
-    }
-
-    tabBuilderBtn.addEventListener('click', () => switchTab('builder'));
-    tabHistoryBtn.addEventListener('click', () => switchTab('history'));
-
-    // === 計數器與記憶邏輯 ===
-    counterInput.addEventListener('input', (e) => {
-      const val = parseInt(e.target.value);
-      if (!isNaN(val) && val >= 1) {
-        fileCounter = val;
-        localStorage.setItem('yoshunko_file_counter', fileCounter);
-      }
-    });
-
-    resetCounterBtn.addEventListener('click', () => {
-      fileCounter = 1;
-      counterInput.value = 1;
-      localStorage.setItem('yoshunko_file_counter', fileCounter);
-    });
-
-    // === 表單互動邏輯 ===
-    document.getElementById("disc-select").addEventListener("change", (event) => {
-      const selectedValue = event.target.value;
-      if (discImages[selectedValue]) {
-        imageElement.src = discImages[selectedValue];
-        imageContainer.style.display = "block";
-      } else {
-        imageContainer.style.display = "none";
-      }
-    });
-
-    document.getElementById("position").addEventListener("change", (event) => {
-      let mainStatOptions = `<option value="" disabled selected>${i18n[currentLang].mainStatPlaceholder}</option>`;
-      stats.forEach(stat => {
-        if (stat.mainValue === null) return;
-        if (stat.main_pos.includes(parseInt(event.target.value))) {
-          const option = document.createElement('option');
-          option.value = stat.id;
-          option.textContent = stat[`name_${currentLang}`];
-          mainStatOptions += option.outerHTML;
-        }
-      });
-      mainStatSelect.innerHTML = mainStatOptions;
-      mainStatSelect.disabled = false;
-
-      if (event.target.value === "1" || event.target.value === "2" || event.target.value === "3"){
-        mainStatSelect.selectedIndex = 1;
-        mainStatSelect.disabled = true;
-      }
-
-      let subStatOptions = `<option value="" disabled selected>${i18n[currentLang].subStatPlaceholder}</option>`;
-      stats.forEach(stat => {
-        if (stat.subValue === null) return;
-        const option = document.createElement('option');
-        option.value = stat.id;
-        option.textContent = stat[`name_${currentLang}`];
-        subStatOptions += option.outerHTML;
-      });
-      subStatSelects.forEach(select => {
-        select.innerHTML = subStatOptions;
-        select.selectedIndex = 0;
-      });
-    });
-
-    // === 生成、儲存與下載邏輯 ===
-    document.querySelector("#create-download-btn").addEventListener("click", () => {
-      const discSelect = document.getElementById("disc-select");
-      const positionSelect = document.getElementById("position");
-      const rankSelect = document.getElementById("rank");
-
-      // 基本防呆還是必須的，否則會產生程式錯誤
-      if (discSelect.value === "" || positionSelect.value === "" || rankSelect.value === "" || mainStatSelect.value === "") {
-        output.textContent = i18n[currentLang].errorEmpty;
+      if (!forceUpdate && appState.dbDates[tool][lang] && appState.dbDates[tool][lang].startsWith(todayDateStr) && appState.dbs[tool][lang].length > 0) {
+        updateDbStatusUI('success', 'dbSuccess');
         return;
       }
 
-      const isExperimental = document.getElementById('experimental-switch').checked;
+      const conf = DB_CONFIG[tool];
+      let attempt = 1;
+      const maxRetries = 3;
 
-      const discId = parseInt(discSelect.value);
-      const position = parseInt(positionSelect.value);
-      const rank = parseInt(rankSelect.value);
-      const id = parseInt(`${discId}${rank}${position}`);
-      
-      const mainStatId = mainStatSelect.value;
-      const mainStat = stats.find(stat => stat.id === mainStatId);
-      const mainStatBaseValue = mainStat.mainValue;
-
-      const subStats = [];
-      const uiSubStatsRecord = []; 
-      let disc_sum = 0;
-
-      for (let i = 1; i <= 4; i++) {
-        const subStatId = document.getElementById(`sub-stat-select-${i}`).value;
-        if (subStatId) {
-          const subStatData = stats.find(stat => stat.id === subStatId);
-          const inputValStr = document.getElementById(`sub-stat-value-${i}`).value;
-          const userInputValue = inputValStr ? parseInt(inputValStr) : 0;
-          const subStatValue = userInputValue + 1; 
+      while (attempt <= maxRetries) {
+        try {
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(conf.url + '?lang=' + (lang === 'zh-Hant'?'zh-TW':lang) + '&branch=beta&x-sveltekit-invalidated=11')}`;
+          const resText = await fetch(proxyUrl).then(r => { if(!r.ok) throw new Error(r.status); return r.text(); });
           
-          disc_sum += subStatValue;
+          let parsedData = extractDataGen(resText, conf.regex, conf.blacklist);
+          if (parsedData.length === 0) throw new Error("Parsed empty");
+
+          appState.dbs[tool][lang] = parsedData;
+          appState.dbDates[tool][lang] = fullTimeStr;
+          localStorage.setItem(`yoshunko_${tool}_db_data`, JSON.stringify(appState.dbs[tool]));
+          localStorage.setItem(`yoshunko_${tool}_db_dates`, JSON.stringify(appState.dbDates[tool]));
           
-          if (!isNaN(subStatValue)) {
-            subStats.push({ key: parseInt(subStatId), base_value: subStatData.subValue, add_value: subStatValue });
-            uiSubStatsRecord.push({ id: subStatId, inputVal: userInputValue });
+          updateDbStatusUI('success', 'dbSuccess');
+          return;
+        } catch (e) {
+          if (attempt === maxRetries) {
+            if (appState.dbs[tool][lang] && appState.dbs[tool][lang].length > 0) {
+              updateDbStatusUI('warning', 'dbFallback');
+            } else {
+              updateDbStatusUI('danger', 'dbError');
+            }
+            break;
           }
+          const retryMsg = i18n[appState.lang].dbRetrying.replace('{n}', attempt);
+          updateDbStatusUI('warning', retryMsg, true);
+          await new Promise(r => setTimeout(r, 3000));
+          attempt++;
         }
       }
+    }
 
-      // 如果未開啟實驗性功能，則執行嚴格審查
-      if (!isExperimental) {
-        if (disc_sum < 8 || disc_sum > 9){
-          output.textContent = i18n[currentLang].errorSum;
-          return;
-        }
-
-        const subStatIds = subStats.map(stat => stat.key);
-        const uniqueSubStatIds = new Set(subStatIds);
-        if (uniqueSubStatIds.size !== subStatIds.length) {
-          output.textContent = i18n[currentLang].errorDup;
-          return;
+    function extractDataGen(text, regex, blacklist) {
+      if(!text) return [];
+      const items = [];
+      const seen = new Set();
+      const clean = text.replace(/\\\//g, "/");
+      let match;
+      regex.lastIndex = 0; // 重置 Regex 游標
+      while ((match = regex.exec(clean)) !== null) {
+        const id = match[1];
+        if (blacklist.includes(id)) continue;
+        if (!seen.has(id)) {
+          items.push({ id, name: match[2], icon: match[3] });
+          seen.add(id);
         }
       }
+      return items.sort((a,b) => parseInt(a.id) - parseInt(b.id));
+    }
 
-      const disc = {
-        id, level: 15, exp: 0, star: 1, lock: false,
-        properties: [{ key: parseInt(mainStatId), base_value: mainStatBaseValue, add_value: 0 }],
-        sub_properties: subStats
-      };
+    function updateDbStatusUI(type, textKey, temp = false) {
+      appState.status = temp ? appState.status : { type, textKey };
+      const banner = document.getElementById('db-status-banner');
+      const textEl = document.getElementById('db-status-text');
+      banner.className = `notification is-${type} mb-0 flex-grow-1`;
+      let msg = i18n[appState.lang][textKey] || textKey;
+      const savedDate = appState.dbDates[appState.activeTool][appState.lang];
+      if ((type === 'success' || (type === 'warning' && textKey === 'dbFallback')) && savedDate) {
+        msg += ` (${i18n[appState.lang].lastUpdatePrefix}: ${savedDate})`;
+      }
+      textEl.innerText = msg;
+    }
 
-      const zonData = ZON.stringify(disc, null, 4);
-      output.textContent = `${zonData}`;
-
-      // 儲存至歷史紀錄
-      const newRecord = {
-        timestamp: new Date().getTime(),
-        discId: discSelect.value,
-        rank: rankSelect.value,
-        position: positionSelect.value,
-        mainStatId: mainStatId,
-        subStats: uiSubStatsRecord,
-        zonData: zonData 
-      };
-      saveToHistory(newRecord);
-
-      // 直接觸發下載
-      const blob = new Blob([zonData], { type: "application/octet-stream" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileCounter.toString(); 
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    function populateSelectDropdown(tool) {
+      const dbList = appState.dbs[tool][appState.lang] || [];
+      const sel = els[tool].sel;
+      const currentVal = sel.value;
+      const placeholder = i18n[appState.lang][`${tool === 'disc'? 'disc': tool === 'agent'?'char': tool}Placeholder`];
       
-      // 更新計數器並儲存
-      fileCounter++;
-      counterInput.value = fileCounter;
-      localStorage.setItem('yoshunko_file_counter', fileCounter);
-    });
+      let html = `<option value="" disabled ${!currentVal ? 'selected' : ''}>${placeholder}</option>`;
+      dbList.forEach(i => { html += `<option value="${i.id}" ${currentVal === i.id ? 'selected' : ''}>${i.name}</option>`; });
+      sel.innerHTML = html;
 
-    // === 歷史紀錄存取與渲染邏輯 ===
-    function loadHistory() {
-      const saved = localStorage.getItem('yoshunko_disc_history');
-      if (saved) historyRecords = JSON.parse(saved);
-    }
-
-    function saveToHistory(record) {
-      historyRecords.unshift(record);
-      localStorage.setItem('yoshunko_disc_history', JSON.stringify(historyRecords));
-    }
-
-    document.getElementById('clear-history-btn').addEventListener('click', () => {
-      if(confirm(i18n[currentLang].confirmClear)) {
-        historyRecords = [];
-        localStorage.removeItem('yoshunko_disc_history');
-        renderHistory();
+      if (currentVal && els[tool].img) {
+        const item = dbList.find(x => x.id === currentVal);
+        if (item) {
+          els[tool].img.src = item.icon;
+          els[tool].imgCont.style.display = 'block';
+        }
       }
+    }
+
+    function renderSettingsTable(tool) {
+      const dbList = appState.dbs[tool][appState.lang] || [];
+      els.dbTable.innerHTML = dbList.map(i => `<tr><td>${i.id}</td><td>${i.name}</td><td><img src="${i.icon}" class="db-icon" loading="lazy"></td></tr>`).join('');
+    }
+
+    // ==========================================
+    // 5. 各模組專屬功能邏輯
+    // ==========================================
+
+    /* --- 驅動盤專用 --- */
+    function populateDiscFormDefs() {
+      // 階級與位置防呆
+      if (els.disc.pos.options[0].value === "") els.disc.pos.options[0].textContent = i18n[appState.lang].posPlaceholder;
+      Array.from(els.disc.rank.options).forEach(opt => {
+        if(opt.value==="2") opt.textContent = i18n[appState.lang].rankB;
+        if(opt.value==="3") opt.textContent = i18n[appState.lang].rankA;
+        if(opt.value==="4") opt.textContent = i18n[appState.lang].rankS;
+      });
+      // 詞條
+      const uStat = (s, isM) => {
+        Array.from(s.options).forEach(opt => {
+          if(opt.value === "") opt.textContent = isM ? i18n[appState.lang].mainStatPlaceholder : i18n[appState.lang].subStatPlaceholder;
+          else { const st = stats.find(x=>x.id===opt.value); if(st) opt.textContent = st[`name_${appState.lang}`]; }
+        });
+      };
+      uStat(els.disc.mainStat, true);
+      els.disc.subs.forEach(s => uStat(s, false));
+    }
+
+    els.disc.pos.addEventListener('change', (e) => {
+      let mOpts = `<option value="" disabled selected>${i18n[appState.lang].mainStatPlaceholder}</option>`;
+      stats.forEach(s => { if(s.mainValue!==null && s.main_pos.includes(parseInt(e.target.value))) mOpts += `<option value="${s.id}">${s[`name_${appState.lang}`]}</option>`; });
+      els.disc.mainStat.innerHTML = mOpts;
+      els.disc.mainStat.disabled = false;
+      if (["1","2","3"].includes(e.target.value)){ els.disc.mainStat.selectedIndex = 1; els.disc.mainStat.disabled = true; }
+
+      let subOpts = `<option value="" disabled selected>${i18n[appState.lang].subStatPlaceholder}</option>`;
+      stats.forEach(s => { if(s.subValue!==null) subOpts += `<option value="${s.id}">${s[`name_${appState.lang}`]}</option>`; });
+      els.disc.subs.forEach(sel => { sel.innerHTML = subOpts; sel.selectedIndex = 0; });
     });
 
-    function renderHistory() {
-      const container = document.getElementById('history-container');
+    document.getElementById('disc-tab-builder-btn').addEventListener('click', (e) => {
+      e.currentTarget.classList.add('is-active'); document.getElementById('disc-tab-history-btn').classList.remove('is-active');
+      document.getElementById('disc-builder-section').style.display='block'; document.getElementById('disc-history-section').style.display='none';
+    });
+    document.getElementById('disc-tab-history-btn').addEventListener('click', (e) => {
+      e.currentTarget.classList.add('is-active'); document.getElementById('disc-tab-builder-btn').classList.remove('is-active');
+      document.getElementById('disc-builder-section').style.display='none'; document.getElementById('disc-history-section').style.display='block';
+      renderDiscHistory();
+    });
+
+    document.getElementById('disc-clear-history-btn').addEventListener('click', () => {
+      if(confirm(i18n[appState.lang].confirmClear)) { appState.discHistory = []; localStorage.removeItem('yoshunko_disc_history'); renderDiscHistory(); }
+    });
+
+    function renderDiscHistory() {
+      const container = document.getElementById('disc-history-container');
       container.innerHTML = '';
-
-      if (historyRecords.length === 0) {
-        container.innerHTML = `<p class="has-text-centered has-text-grey">${i18n[currentLang].emptyHistory}</p>`;
-        return;
-      }
-
-      historyRecords.forEach((record, index) => {
-        const imgSrc = discImages[record.discId] || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
-        
-        // 動態取得翻譯後的名稱
-        const localizedDiscName = discNames[record.discId] ? discNames[record.discId][currentLang] : "Unknown";
-        const mainStatData = stats.find(s => s.id === record.mainStatId);
-        const localizedMainStat = mainStatData ? mainStatData[`name_${currentLang}`] : "Unknown";
-        
-        let displayRank = i18n[currentLang].rankB;
-        if (record.rank === "3") displayRank = i18n[currentLang].rankA;
-        if (record.rank === "4") displayRank = i18n[currentLang].rankS;
-
-        let subStatsHtml = '';
-        record.subStats.forEach(sub => {
-          const sData = stats.find(s => s.id === sub.id);
-          const localizedSub = sData ? sData[`name_${currentLang}`] : "Unknown";
-          subStatsHtml += `<div><span class="is-size-6">${localizedSub} : ${sub.inputVal}</span></div>`;
+      if(appState.discHistory.length === 0) { container.innerHTML = `<p class="has-text-centered">${i18n[appState.lang].emptyHistory}</p>`; return; }
+      
+      const dbList = appState.dbs.disc[appState.lang] || [];
+      appState.discHistory.forEach((rec, idx) => {
+        const found = dbList.find(d => d.id === rec.discId);
+        const name = found ? found.name : "Unknown";
+        const img = found ? found.icon : "";
+        const mStat = stats.find(s => s.id === rec.mainStatId);
+        const mName = mStat ? mStat[`name_${appState.lang}`] : "";
+        let rName = i18n[appState.lang].rankB; if(rec.rank==="3") rName = i18n[appState.lang].rankA; if(rec.rank==="4") rName = i18n[appState.lang].rankS;
+        let sHtml = '';
+        rec.subStats.forEach(sub => {
+          const sD = stats.find(s=>s.id===sub.id); const sN = sD ? sD[`name_${appState.lang}`] : "";
+          sHtml += `<div><span class="is-size-6">${sN} : ${sub.inputVal}</span></div>`;
         });
-
-        const cardHtml = `
-          <div class="history-card">
-            <div class="columns is-mobile is-vcentered">
-              <div class="column is-narrow">
-                <div class="history-img-circle">
-                  <img src="${imgSrc}" alt="${localizedDiscName}">
-                </div>
-              </div>
-              <div class="column">
-                <div class="is-flex is-justify-content-space-between is-align-items-flex-end">
-                  <span class="is-size-4 has-text-weight-bold">${localizedDiscName}</span>
-                  <span class="is-size-6 has-text-weight-semibold">${record.position} ${i18n[currentLang].posUnit}</span>
-                </div>
-                <div class="history-divider"></div>
-                <div class="mb-2 is-flex is-align-items-center">
-                  <span class="is-size-5 has-text-weight-medium">${localizedMainStat}</span>
-                  <span class="tag is-warning is-light ml-3">${displayRank}</span>
-                </div>
-                <div class="history-divider"></div>
-                <div class="sub-stat-grid">
-                  ${subStatsHtml}
-                </div>
-                <div class="mt-3 has-text-right">
-                  <button class="button is-small is-info direct-download-btn" data-index="${index}">${i18n[currentLang].directDownload}</button>
-                  <button class="button is-small is-primary is-outlined apply-btn" data-index="${index}">${i18n[currentLang].applyBtn}</button>
-                  <button class="button is-small is-danger is-outlined delete-btn" data-index="${index}">${i18n[currentLang].deleteBtn}</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-        container.insertAdjacentHTML('beforeend', cardHtml);
+        
+        container.insertAdjacentHTML('beforeend', `
+          <div class="history-card"><div class="columns is-mobile is-vcentered"><div class="column is-narrow"><div class="history-img-circle"><img src="${img}"></div></div>
+          <div class="column"><div class="is-flex is-justify-content-space-between"><span class="is-size-5 has-text-weight-bold">${name}</span><span>${rec.position} ${i18n[appState.lang].posUnit}</span></div>
+          <div class="history-divider"></div><div class="mb-2"><span class="is-size-6">${mName}</span><span class="tag is-warning is-light ml-3">${rName}</span></div>
+          <div class="history-divider"></div><div class="sub-stat-grid">${sHtml}</div>
+          <div class="mt-3 has-text-right"><button class="button is-small is-info disc-dl-btn" data-idx="${idx}">${i18n[appState.lang].directDownload}</button> <button class="button is-small is-primary is-outlined disc-app-btn" data-idx="${idx}">${i18n[appState.lang].applyBtn}</button> <button class="button is-small is-danger is-outlined disc-del-btn" data-idx="${idx}">${i18n[appState.lang].deleteBtn}</button></div>
+          </div></div></div>
+        `);
       });
-
-      document.querySelectorAll('.direct-download-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => directDownloadRecord(e.target.getAttribute('data-index')));
-      });
-      document.querySelectorAll('.apply-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => applyRecord(e.target.getAttribute('data-index')));
-      });
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => deleteRecord(e.target.getAttribute('data-index')));
-      });
+      document.querySelectorAll('.disc-dl-btn').forEach(b => b.addEventListener('click', e => dlDiscHistory(e.target.dataset.idx)));
+      document.querySelectorAll('.disc-app-btn').forEach(b => b.addEventListener('click', e => appDiscHistory(e.target.dataset.idx)));
+      document.querySelectorAll('.disc-del-btn').forEach(b => b.addEventListener('click', e => { appState.discHistory.splice(e.target.dataset.idx, 1); localStorage.setItem('yoshunko_disc_history', JSON.stringify(appState.discHistory)); renderDiscHistory(); }));
     }
 
-    function directDownloadRecord(index) {
-      const record = historyRecords[index];
-      if (!record.zonData) {
-        alert(i18n[currentLang].oldRecordAlert);
-        return;
-      }
-      const blob = new Blob([record.zonData], { type: "application/octet-stream" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileCounter.toString(); 
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      fileCounter++;
-      counterInput.value = fileCounter;
-      localStorage.setItem('yoshunko_file_counter', fileCounter);
+    function dlDiscHistory(idx) {
+      const rec = appState.discHistory[idx]; if(!rec.zonData) return alert(i18n[appState.lang].oldRecordAlert);
+      triggerDownload(rec.zonData, appState.discCounter.toString());
+      appState.discCounter++; els.disc.counter.value = appState.discCounter; localStorage.setItem('yoshunko_disc_counter', appState.discCounter);
+    }
+    function appDiscHistory(idx) {
+      const rec = appState.discHistory[idx];
+      document.getElementById('disc-tab-builder-btn').click();
+      els.disc.sel.value = rec.discId; els.disc.sel.dispatchEvent(new Event('change'));
+      els.disc.rank.value = rec.rank; els.disc.pos.value = rec.position; els.disc.pos.dispatchEvent(new Event('change'));
+      els.disc.mainStat.value = rec.mainStatId;
+      els.disc.subs.forEach(s => s.selectedIndex = 0); els.disc.subVals.forEach(v => v.value = '');
+      rec.subStats.forEach((sub, i) => { els.disc.subs[i].value = sub.id; els.disc.subVals[i].value = sub.inputVal; });
+      printOutput('disc', i18n[appState.lang].successApply, 'success');
     }
 
-    function deleteRecord(index) {
-      historyRecords.splice(index, 1);
-      localStorage.setItem('yoshunko_disc_history', JSON.stringify(historyRecords));
-      renderHistory();
-    }
-
-    function applyRecord(index) {
-      const record = historyRecords[index];
-      switchTab('builder');
-
-      const discSelect = document.getElementById("disc-select");
-      discSelect.value = record.discId;
-      discSelect.dispatchEvent(new Event('change'));
-
-      document.getElementById("rank").value = record.rank;
-
-      const posSelect = document.getElementById("position");
-      posSelect.value = record.position;
-      posSelect.dispatchEvent(new Event('change'));
-
-      document.getElementById("main-stat-select").value = record.mainStatId;
-
-      for (let i = 1; i <= 4; i++) {
-        document.getElementById(`sub-stat-select-${i}`).selectedIndex = 0;
-        document.getElementById(`sub-stat-value-${i}`).value = '';
-      }
-
-      record.subStats.forEach((sub, i) => {
-        const fieldIndex = i + 1;
-        document.getElementById(`sub-stat-select-${fieldIndex}`).value = sub.id;
-        document.getElementById(`sub-stat-value-${fieldIndex}`).value = sub.inputVal;
-      });
-
-      output.textContent = i18n[currentLang].successApply;
-    }
-
-    // === 重置面板 ===
-    document.getElementById("reset-button").addEventListener("click", () => {
-      document.getElementById("disc-select").selectedIndex = 0;
-      document.getElementById("position").selectedIndex = 0;
-      document.getElementById("rank").selectedIndex = 2;
-      imageContainer.style.display = "none";
-      imageElement.src = "";
-      
-      document.getElementById("experimental-switch").checked = false;
-
-      mainStatSelect.innerHTML = `<option value="" disabled selected>${i18n[currentLang].mainStatPlaceholder}</option>`;
-      mainStatSelect.disabled = true;
-      subStatSelects.forEach(select => {
-        select.innerHTML = `<option value="" disabled selected>${i18n[currentLang].subStatPlaceholder}</option>`;
-        select.selectedIndex = 0;
-      });
-      document.getElementById("main-stat-value").value = '';
-      for (let i = 1; i <= 4; i++) {
-        document.getElementById(`sub-stat-value-${i}`).value = '';
-      }
-      output.textContent = '';
+    /* --- 角色專用 --- */
+    els.agent.unl.addEventListener('input', () => {
+      let v = parseInt(els.agent.unl.value) || 0;
+      els.agent.toggles.forEach((cb, i) => { if(i+1 > v) { cb.checked=false; cb.disabled=true; } else cb.disabled=false; });
     });
+    els.agent.toggles.forEach(t => t.addEventListener('change', e => {
+      if(!e.target.checked) return;
+      const ex = {'agent-t-1':'agent-t-4','agent-t-4':'agent-t-1','agent-t-2':'agent-t-5','agent-t-5':'agent-t-2','agent-t-3':'agent-t-6','agent-t-6':'agent-t-3'};
+      const p = document.getElementById(ex[e.target.id]); if(p && p.checked) p.checked = false;
+    }));
+
+    function handleAgentImport(e) {
+      const file = e.target.files[0]; if(!file) return;
+      document.getElementById('agent-import-file-name').textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = evt => {
+        try {
+          const content = evt.target.result;
+          const matchId = file.name.match(/(\d+)/);
+          if(matchId) { els.agent.sel.value = matchId[1]; els.agent.sel.dispatchEvent(new Event('change')); }
+          
+          const m = (reg) => { const x=content.match(reg); return x?x[1]:null; };
+          const l = m(/\.level\s*=\s*(\d+)/); if(l) els.agent.lvl.value = l;
+          const r = m(/\.rank\s*=\s*(\d+)/); if(r) els.agent.rank.value = r;
+          const p = m(/\.passive_skill_level\s*=\s*(\d+)/); if(p) els.agent.pas.value = p;
+          const u = m(/\.unlocked_talent_num\s*=\s*(\d+)/); if(u) { els.agent.unl.value = u; els.agent.unl.dispatchEvent(new Event('input')); }
+          
+          const sw = content.match(/\.talent_switch_list\s*=\s*\.\{([\s\S]*?)\}/);
+          if(sw) { const bools = [...sw[1].matchAll(/(true|false)/g)].map(x=>x[1]==='true'); bools.forEach((b,i) => { if(i<6 && !els.agent.toggles[i].disabled) els.agent.toggles[i].checked = b; }); }
+          
+          const ms = (t) => m(new RegExp(`\\.type\\s*=\\s*\\.${t},\\s*\\.level\\s*=\\s*(\\d+)`));
+          const skMap = {common_attack:'common', special_attack:'special', evade:'evade', cooperate_skill:'coop', unique_skill:'unique', core_skill:'core', assist_skill:'assist'};
+          Object.keys(skMap).forEach(k => { const v = ms(k); if(v) els.agent.skills[skMap[k]].value = v; });
+          
+          printOutput('agent', i18n[appState.lang].importSuccess, 'success');
+        } catch(err) { printOutput('agent', i18n[appState.lang].importFail, 'error'); }
+      };
+      reader.readAsText(file);
+    }
+    document.getElementById('agent-import-file').addEventListener('change', handleAgentImport);
+
+    /* --- 邦布專用 --- */
+    function handleBangbooImport(e) {
+      const file = e.target.files[0]; if(!file) return;
+      document.getElementById('bangboo-import-file-name').textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = evt => {
+        try {
+          const content = evt.target.result;
+          const matchId = file.name.match(/(\d+)/);
+          if(matchId) { els.bangboo.sel.value = matchId[1]; els.bangboo.sel.dispatchEvent(new Event('change')); }
+          
+          const m = (reg) => { const x=content.match(reg); return x?x[1]:null; };
+          const l = m(/\.level\s*=\s*(\d+)/); if(l) els.bangboo.lvl.value = l;
+          const r = m(/\.rank\s*=\s*(\d+)/); if(r) els.bangboo.rank.value = r;
+          const s = m(/\.star\s*=\s*(\d+)/); if(s) els.bangboo.star.value = s;
+          
+          printOutput('bangboo', i18n[appState.lang].importSuccess, 'success');
+        } catch(err) { printOutput('bangboo', i18n[appState.lang].importFail, 'error'); }
+      };
+      reader.readAsText(file);
+    }
+    document.getElementById('bangboo-import-file').addEventListener('change', handleBangbooImport);
+
+    // ==========================================
+    // 6. 全局事件監聽
+    // ==========================================
+    function setupGlobalListeners() {
+      // 導航 Tabs 切換
+      els.mainTabs.forEach(t => t.addEventListener('click', (e) => switchActiveTool(e.currentTarget.dataset.tool)));
+
+      // 語言切換
+      els.langSwitcher.addEventListener('change', async (e) => {
+        appState.lang = e.target.value;
+        localStorage.setItem('yoshunko_all_lang', appState.lang);
+        els[appState.activeTool].sel.innerHTML = `<option value="" disabled selected>${i18n[appState.lang].dbLoading}</option>`;
+        await checkAndLoadDB(appState.activeTool, appState.lang, false);
+        updateAllUIText();
+        renderSettingsTable(appState.activeTool);
+      });
+
+      // 共用下拉選單圖片更新與檔名連動
+      ['disc', 'agent', 'engine', 'bangboo'].forEach(tool => {
+        els[tool].sel.addEventListener('change', e => {
+          const id = e.target.value;
+          if(els[tool].fileIn) els[tool].fileIn.value = id;
+          const list = appState.dbs[tool][appState.lang] || [];
+          const found = list.find(x=>x.id===id);
+          if(found) { els[tool].img.src = found.icon; els[tool].imgCont.style.display = 'block'; }
+          else if(id && tool!=='disc') { els[tool].img.src = `https://cdn.gachabase.net/prod/zzz/assets/custom/SquareIcon_${id}_272_14050658.webp`; els[tool].imgCont.style.display = 'block'; }
+          else els[tool].imgCont.style.display = 'none';
+        });
+      });
+
+      // Modals
+      document.getElementById('tutorial-btn').addEventListener('click', () => els.tutModal.classList.add('is-active'));
+      const closeTut = () => els.tutModal.classList.remove('is-active');
+      document.getElementById('tutorial-modal-bg').addEventListener('click', closeTut);
+      document.getElementById('tutorial-close-btn').addEventListener('click', closeTut);
+      document.getElementById('tutorial-confirm-btn').addEventListener('click', closeTut);
+
+      document.getElementById('settings-btn').addEventListener('click', () => {
+        renderSettingsTable(appState.activeTool);
+        els.setModal.classList.add('is-active');
+      });
+      const closeSet = () => els.setModal.classList.remove('is-active');
+      document.getElementById('settings-modal-bg').addEventListener('click', closeSet);
+      document.getElementById('settings-close-btn').addEventListener('click', closeSet);
+
+      // 設定面板按鈕
+      document.getElementById('force-update-btn').addEventListener('click', async (e) => {
+        e.target.classList.add('is-loading');
+        await checkAndLoadDB(appState.activeTool, appState.lang, true);
+        populateSelectDropdown(appState.activeTool); renderSettingsTable(appState.activeTool);
+        e.target.classList.remove('is-loading');
+      });
+
+      document.getElementById('manual-file-input').addEventListener('change', async (e) => {
+        const file = e.target.files[0]; if(!file) return;
+        document.getElementById('manual-file-name').textContent = file.name;
+        try {
+          const text = await file.text();
+          const conf = DB_CONFIG[appState.activeTool];
+          const parsed = extractDataGen(text, conf.regex, conf.blacklist);
+          if(parsed.length > 0) {
+            appState.dbs[appState.activeTool][appState.lang] = parsed;
+            appState.dbDates[appState.activeTool][appState.lang] = new Date().toLocaleString('zh-TW', { hour12: false });
+            localStorage.setItem(`yoshunko_${appState.activeTool}_db_data`, JSON.stringify(appState.dbs[appState.activeTool]));
+            localStorage.setItem(`yoshunko_${appState.activeTool}_db_dates`, JSON.stringify(appState.dbDates[appState.activeTool]));
+            updateDbStatusUI('success', 'dbSuccess'); populateSelectDropdown(appState.activeTool); renderSettingsTable(appState.activeTool);
+          } else alert("解析失敗，檔案內找不到有效資料！");
+        } catch(err) { alert("讀取檔案時發生錯誤！"); }
+      });
+
+      // 驅動盤與音擎計數器
+      els.disc.counter.addEventListener('input', (e) => {
+        const v = parseInt(e.target.value); if(!isNaN(v) && v>=1) { appState.discCounter=v; localStorage.setItem('yoshunko_disc_counter', v); }
+      });
+      document.getElementById('disc-reset-counter').addEventListener('click', () => { appState.discCounter=1; els.disc.counter.value=1; localStorage.setItem('yoshunko_disc_counter',1); });
+      
+      els.engine.counter.addEventListener('input', (e) => {
+        const v = parseInt(e.target.value); if(!isNaN(v) && v>=1) { appState.engineCounter=v; localStorage.setItem('yoshunko_engine_counter', v); }
+      });
+      document.getElementById('engine-reset-counter').addEventListener('click', () => { appState.engineCounter=1; els.engine.counter.value=1; localStorage.setItem('yoshunko_engine_counter',1); });
+    }
+
+    // ==========================================
+    // 7. 生成與下載入口
+    // ==========================================
+    function setupToolSpecificListeners() {
+      // Disc
+      document.getElementById('disc-create-btn').addEventListener('click', () => {
+        if(!els.disc.sel.value || !els.disc.pos.value || !els.disc.rank.value || !els.disc.mainStat.value) return printOutput('disc', i18n[appState.lang].errEmpty, 'error');
+        const id = parseInt(`${els.disc.sel.value.substring(0,3)}${els.disc.rank.value}${els.disc.pos.value}`);
+        const mStat = stats.find(s=>s.id===els.disc.mainStat.value);
+        let sum = 0; const sArr = []; const uiRec = [];
+        for(let i=0; i<4; i++) {
+          const sId = els.disc.subs[i].value;
+          if(sId) {
+            const vInp = parseInt(els.disc.subVals[i].value) || 0; const vAdd = vInp + 1;
+            sum += vAdd; sArr.push({key: parseInt(sId), base_value: stats.find(s=>s.id===sId).subValue, add_value: vAdd}); uiRec.push({id: sId, inputVal: vInp});
+          }
+        }
+        if(sum < 8 || sum > 9) return printOutput('disc', i18n[appState.lang].errSum, 'error');
+        if(new Set(sArr.map(s=>s.key)).size !== sArr.length) return printOutput('disc', i18n[appState.lang].errDup, 'error');
+        
+        const disc = { id, level:15, exp:0, star:1, lock:false, properties:[{key: parseInt(mStat.id), base_value: mStat.mainValue, add_value:0}], sub_properties: sArr };
+        const zonStr = ZON.stringify(disc, null, 4);
+        printOutput('disc', zonStr, 'raw');
+        
+        appState.discHistory.unshift({ timestamp: new Date().getTime(), discId: els.disc.sel.value, rank: els.disc.rank.value, position: els.disc.pos.value, mainStatId: els.disc.mainStat.value, subStats: uiRec, zonData: zonStr });
+        if(appState.discHistory.length>30) appState.discHistory.pop();
+        localStorage.setItem('yoshunko_disc_history', JSON.stringify(appState.discHistory));
+        
+        triggerDownload(zonStr, appState.discCounter.toString());
+        appState.discCounter++; els.disc.counter.value = appState.discCounter; localStorage.setItem('yoshunko_disc_counter', appState.discCounter);
+      });
+      document.getElementById('disc-reset-btn').addEventListener('click', () => {
+        els.disc.sel.selectedIndex=0; els.disc.sel.dispatchEvent(new Event('change'));
+        els.disc.pos.selectedIndex=0; els.disc.rank.selectedIndex=2; els.disc.mainStat.innerHTML=''; els.disc.mainStat.disabled=true;
+        els.disc.subs.forEach(s=>s.innerHTML=''); els.disc.subVals.forEach(v=>v.value=''); printOutput('disc',''); populateDiscFormDefs();
+      });
+
+      // Agent
+      document.getElementById('agent-create-btn').addEventListener('click', () => {
+        const id = els.agent.sel.value; const lvl = parseInt(els.agent.lvl.value)||0; const rank = parseInt(els.agent.rank.value)||0;
+        const pas = parseInt(els.agent.pas.value)||0; const unl = parseInt(els.agent.unl.value)||0;
+        if(!id) return printOutput('agent', i18n[appState.lang].errEmpty, 'error');
+        if(lvl<1||lvl>60 || rank<1||rank>6 || pas<1||pas>6 || unl<0||unl>6) return printOutput('agent', i18n[appState.lang].errNumLimit, 'error');
+        const sVals = Object.keys(els.agent.skills).reduce((acc, k) => { acc[k] = parseInt(els.agent.skills[k].value)||0; return acc; }, {});
+        if(sVals.core<1||sVals.core>7) return printOutput('agent', i18n[appState.lang].errNumLimit, 'error');
+        for(let k in sVals) if(k!=='core' && (sVals[k]<1||sVals[k]>12)) return printOutput('agent', i18n[appState.lang].errNumLimit, 'error');
+        
+        const ts = els.agent.toggles.map(t=>t.checked);
+        for(let i=0; i<6; i++) if(ts[i] && (i+1)>unl) return printOutput('agent', i18n[appState.lang].errToggleLocked, 'error');
+        if((ts[0]&&ts[3]) || (ts[1]&&ts[4]) || (ts[2]&&ts[5])) return printOutput('agent', i18n[appState.lang].errToggleConflict, 'error');
+
+        const zonStr = `.{
+    .level = ${lvl},
+    .exp = 0,
+    .rank = ${rank},
+    .unlocked_talent_num = ${unl},
+    .talent_switch_list = .{ ${ts.join(', ')} },
+    .passive_skill_level = ${pas},
+    .cur_weapon_uid = 0,
+    .is_favorite = false,
+    .avatar_skin_id = 0,
+    .is_awake_available = false,
+    .awake_id = 0,
+    .cur_form_id = 0,
+    .is_awake_enabled = false,
+    .dressed_equip = .{ null, null, null, null, null, null },
+    .show_weapon_type = .active,
+    .skill_type_level = .{
+        .{ .type = .common_attack, .level = ${sVals.common} },
+        .{ .type = .special_attack, .level = ${sVals.special} },
+        .{ .type = .evade, .level = ${sVals.evade} },
+        .{ .type = .cooperate_skill, .level = ${sVals.coop} },
+        .{ .type = .unique_skill, .level = ${sVals.unique} },
+        .{ .type = .core_skill, .level = ${sVals.core} },
+        .{ .type = .assist_skill, .level = ${sVals.assist} },
+    },
+}`;
+        printOutput('agent', zonStr, 'raw'); triggerDownload(zonStr, id);
+      });
+      document.getElementById('agent-reset-btn').addEventListener('click', () => {
+        els.agent.sel.selectedIndex=0; els.agent.sel.dispatchEvent(new Event('change'));
+        document.getElementById('agent-import-file').value=''; document.getElementById('agent-import-file-name').textContent=i18n[appState.lang].noFileSelected;
+        els.agent.lvl.value=60; els.agent.rank.value=6; els.agent.pas.value=6; els.agent.unl.value=6; els.agent.unl.dispatchEvent(new Event('input'));
+        els.agent.toggles.forEach((t,i) => t.checked = (i>=3));
+        Object.keys(els.agent.skills).forEach(k => els.agent.skills[k].value = k==='core'?7:12);
+        printOutput('agent','');
+      });
+
+      // Engine
+      document.getElementById('engine-create-btn').addEventListener('click', () => {
+        const id = els.engine.sel.value; const lvl = parseInt(els.engine.lvl.value)||0; const ref = parseInt(els.engine.ref.value)||0;
+        if(!id) return printOutput('engine', i18n[appState.lang].errEmpty, 'error');
+        if(lvl<1||lvl>60 || ref<1||ref>5) return printOutput('engine', i18n[appState.lang].errNumLimit, 'error');
+        const zonStr = `.{ .id = ${id}, .level = ${lvl}, .exp = 0, .star = 5, .refine_level = ${ref}, .lock = false, }`;
+        printOutput('engine', zonStr, 'raw'); triggerDownload(zonStr, appState.engineCounter.toString());
+        appState.engineCounter++; els.engine.counter.value = appState.engineCounter; localStorage.setItem('yoshunko_engine_counter', appState.engineCounter);
+      });
+      document.getElementById('engine-reset-btn').addEventListener('click', () => {
+        els.engine.sel.selectedIndex=0; els.engine.sel.dispatchEvent(new Event('change'));
+        els.engine.lvl.value=60; els.engine.ref.value=5; printOutput('engine','');
+      });
+
+      // Bangboo
+      document.getElementById('bangboo-create-btn').addEventListener('click', () => {
+        const id = els.bangboo.sel.value; const lvl = parseInt(els.bangboo.lvl.value)||0; const rank = parseInt(els.bangboo.rank.value)||0; const star = parseInt(els.bangboo.star.value)||0;
+        if(!id) return printOutput('bangboo', i18n[appState.lang].errEmpty, 'error');
+        if(lvl<1||lvl>60 || rank<1||rank>6 || star<1||star>6) return printOutput('bangboo', i18n[appState.lang].errNumLimit, 'error');
+        const zonStr = `.{
+    .level = ${lvl},
+    .exp = 0,
+    .rank = ${rank},
+    .star = ${star},
+    .skill_type_level = .{
+        .{ .type = .manual, .level = 8 },
+        .{ .type = .passive, .level = 5 },
+        .{ .type = .qte, .level = 8 },
+        .{ .type = .aid, .level = 8 },
+    },
+    .is_favorite = false,
+}`;
+        printOutput('bangboo', zonStr, 'raw'); triggerDownload(zonStr, id);
+      });
+      document.getElementById('bangboo-reset-btn').addEventListener('click', () => {
+        els.bangboo.sel.selectedIndex=0; els.bangboo.sel.dispatchEvent(new Event('change'));
+        document.getElementById('bangboo-import-file').value=''; document.getElementById('bangboo-import-file-name').textContent=i18n[appState.lang].noFileSelected;
+        els.bangboo.lvl.value=60; els.bangboo.rank.value=6; els.bangboo.star.value=1; printOutput('bangboo','');
+      });
+    }
+
+    // 小工具
+    function printOutput(tool, msg, state) {
+      const out = els[tool].out; out.textContent = msg;
+      out.className = ''; if(state) out.classList.add(`has-${state}`);
+    }
+    function triggerDownload(str, filename) {
+      const b = new Blob([str], { type: "application/octet-stream" }); const u = URL.createObjectURL(b);
+      const a = document.createElement("a"); a.href = u; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u);
+    }
   </script>
 </body>
 
