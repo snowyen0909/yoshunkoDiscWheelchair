@@ -17,16 +17,6 @@
     .has-error { color: #f14668; font-weight: bold; }
     .has-success { color: #48c774; font-weight: bold; }
 
-    /* 右上角固定區塊 */
-    .top-right-controls {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      display: flex;
-      gap: 10px;
-      z-index: 10;
-    }
-
     /* 驅動盤歷史紀錄樣式 */
     .history-card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: #fff; }
     .history-img-circle { width: 100px; height: 100px; background-color: #8a8a8a; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
@@ -36,13 +26,6 @@
 
     /* 角色與邦布技能網格 */
     .skill-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
-
-    @media (max-width: 768px) {
-      .top-right-controls {
-        top: 10px; right: 10px; flex-direction: column; gap: 5px; align-items: flex-end;
-      }
-      .card-content-main { padding-top: 4.5rem !important; }
-    }
   </style>
 </head>
 
@@ -51,24 +34,24 @@
     <br/>
     <div class="card" style="position: relative;">
       
-      <div class="top-right-controls">
-        <button class="button is-small is-dark is-outlined" id="settings-btn">
-          <span data-i18n="settingsBtn">⚙️ 設定</span>
-        </button>
-        <div class="select is-small">
-          <select id="lang-switcher">
-            <option value="zh-Hant">繁體中文</option>
-            <option value="zh-CN">简体中文</option>
-            <option value="en">English</option>
-          </select>
+      <div class="card-content pt-5">
+        
+        <h1 class="title has-text-centered mb-2" id="main-app-title">加載中...</h1>
+        
+        <div class="is-flex is-justify-content-flex-end is-align-items-center mb-3" style="gap: 10px;">
+          <button class="button is-small is-dark is-outlined" id="settings-btn">
+            <span data-i18n="settingsBtn">⚙️ 設定</span>
+          </button>
+          <div class="select is-small">
+            <select id="lang-switcher">
+              <option value="zh-Hant">繁體中文</option>
+              <option value="zh-CN">简体中文</option>
+              <option value="en">English</option>
+            </select>
+          </div>
         </div>
-      </div>
-
-      <div class="card-content card-content-main pt-6">
         
-        <h1 class="title has-text-centered mb-4" id="main-app-title">加載中...</h1>
-        
-        <div class="tabs is-centered is-boxed is-medium mb-5">
+        <div class="tabs is-centered is-boxed is-medium mb-4">
           <ul>
             <li class="main-tab is-active" data-tool="disc"><a data-i18n="tabDisc">驅動盤</a></li>
             <li class="main-tab" data-tool="agent"><a data-i18n="tabAgent">代理人</a></li>
@@ -77,8 +60,12 @@
           </ul>
         </div>
 
-        <div class="has-text-centered mb-4">
+        <div class="is-flex is-align-items-center is-justify-content-space-between mb-4">
+          <div style="flex: 1;"></div>
           <button class="button is-small is-info is-light" id="tutorial-btn" data-i18n="tutorialBtn">📖 使用教學</button>
+          <div style="flex: 1; text-align: right;">
+            <span id="global-db-status" class="tag is-light" title="資料庫狀態">⏳ 加載中</span>
+          </div>
         </div>
 
         <div id="view-disc" class="app-view is-active content">
@@ -147,6 +134,13 @@
             <div class="field has-addons">
               <p class="control"><span class="select"><select id="disc-sub-4"><option value="" disabled selected data-i18n="subStatPlaceholder"></option></select></span></p>
               <p class="control is-expanded"><input type="number" id="disc-sub-val-4" class="input" data-i18n-placeholder="subStatInput_4" /></p>
+            </div>
+
+            <div class="field mt-3 mb-4">
+              <label class="checkbox has-text-danger is-size-7 has-text-weight-bold">
+                <input type="checkbox" id="disc-exp-toggle">
+                <span data-i18n="discExpToggle">⚠️ 實驗性功能：解除副詞條數值與重複限制</span>
+              </label>
             </div>
 
             <hr>
@@ -345,6 +339,7 @@
             </header>
             <section class="modal-card-body">
               <p class="mb-2" id="tut-step-1">生成新設定時，請直接點擊「下載並儲存」。</p>
+              <p class="mb-4 has-text-danger-dark is-size-7" data-i18n="tutorialStep3">首次加載較慢請耐心等待，若加載失敗先點擊強制更新，若再加載失敗再點擊「🔗 取得原始檔」在那一頁按 Ctrl + S（或右鍵另存新檔）</p>
               <p class="mb-2" data-i18n="tutorialStep2">生成後的檔案放入：</p>
               <div class="notification is-light p-3">
                 <code class="is-size-6 has-text-weight-bold has-text-danger" id="tut-path">\Ubuntu\home\自訂名稱資料夾\yoshunko\state\player\1\</code>
@@ -375,7 +370,11 @@
               </div>
               
               <div class="box mb-4" style="background: #fdfdfd; border: 1px dashed #ccc; padding: 1rem;">
-                <p class="is-size-7 mb-2 has-text-grey" data-i18n="manualUploadDesc">若連線失敗，可手動上傳 GachaBase 的 __data.json 檔案進行覆蓋：</p>
+                <p class="is-size-7 mb-2 has-text-grey" data-i18n="manualUploadDesc">若連線失敗或需要覆蓋資料庫，請選擇對應的 .json 檔案：</p>
+                <div class="buttons mb-3">
+                  <button class="button is-small is-info" id="download-db-btn" data-i18n="downloadDbBtn">📥 導出當前資料 (Backup)</button>
+                  <a class="button is-small is-link is-light" id="source-link-btn" target="_blank" data-i18n="sourceLinkBtn">🔗 取得原始檔</a>
+                </div>
                 <div class="file has-name is-small">
                   <label class="file-label">
                     <input class="file-input" type="file" id="manual-file-input" accept=".json,.txt">
@@ -412,10 +411,13 @@
         settingsBtn: "⚙️ 設定", settingsTitle: "⚙️ 設定面板",
         tutorialBtn: "📖 使用教學", tutorialTitle: "📖 使用教學", tutorialConfirm: "確認",
         tutorialStep2: "生成後的檔案放入：",
+        tutorialStep3: "首次加載較慢請耐心等待，若加載失敗先點擊強制更新，若再加載失敗再點擊「🔗 取得原始檔」在那一頁按 Ctrl + S（或右鍵另存新檔）",
         dbLoading: "正在檢查當前資料庫...", dbSuccess: "✅ 資料庫更新成功", lastUpdatePrefix: "最後更新",
         dbFallback: "⚠️ 無法連線，已使用本機舊版快取", dbError: "❌ 資料庫加載失敗 (請檢查網路或嘗試手動上傳)",
-        dbRetrying: "連線失敗，等待 3 秒後進行第 {n} 次重試...", manualUploadDesc: "若連線失敗或需要覆蓋，可手動上傳對應語言的 __data.json 檔案：",
-        dbUploadBtn: "選擇檔案…", forceUpdateBtn: "強制更新", dbThName: "名稱", dbThImage: "圖片",
+        dbRetrying: "連線失敗，等待 3 秒後進行第 {n} 次重試...", manualUploadDesc: "若連線失敗或需要覆蓋資料庫，請選擇對應的 .json 檔案：",
+        dbUploadBtn: "選擇檔案…", forceUpdateBtn: "強制更新", downloadDbBtn: "📥 導出當前資料 (Backup)", sourceLinkBtn: "🔗 取得原始檔",
+        dbTagSuccess: "✅ 資料庫正常", dbTagWarning: "⚠️ 使用快取", dbTagError: "❌ 載入失敗", dbTagLoading: "⏳ 加載中",
+        dbThName: "名稱", dbThImage: "圖片", dbEmptyAlert: "資料庫目前為空，無法下載！",
         createDownloadBtn: "下載並儲存", resetBtn: "重置面板", nextFileStr: "下一個下載檔名：", resetCounterBtn: "重置為 1",
         importBtn: "匯入檔案...", noFileSelected: "尚未選擇檔案...",
         importHelpAgent: "選擇已生成的角色設定檔，將自動解析檔名(ID)及內部數值。", importHelpBangboo: "選擇已生成的邦布設定檔，將自動解析檔名(ID)及內部數值。",
@@ -425,6 +427,7 @@
         tabBuilder: "生成器", tabHistory: "歷史紀錄", discPlaceholder: "選擇驅動盤", rankB: "B級", rankA: "A級", rankS: "S級",
         posPlaceholder: "部位", posUnit: "號位", mainStatPlaceholder: "請選擇主詞條", mainStatStatic: "主詞條為固定值", subStatPlaceholder: "請選擇副詞條",
         subStatInput_1: "副詞條 1 強化次數", subStatInput_2: "副詞條 2 強化次數", subStatInput_3: "副詞條 3 強化次數", subStatInput_4: "副詞條 4 強化次數",
+        discExpToggle: "⚠️ 實驗性功能：解除副詞條數值與重複限制", expWarning: "【警告】開啟此功能將解除副詞條的強化次數上限與重複限制。這可能導致生成的檔案在遊戲中異常或失效。確定要開啟嗎？",
         historyTitle: "已儲存的驅動盤紀錄", clearHistoryBtn: "清空所有紀錄", emptyHistory: "目前沒有任何紀錄。",
         directDownload: "直接下載", applyBtn: "套用", deleteBtn: "刪除", confirmClear: "確定要清空所有歷史紀錄嗎？",
         oldRecordAlert: "此筆為舊版紀錄，無法直接下載。請點擊「套用」後重新生成！",
@@ -446,10 +449,13 @@
         settingsBtn: "⚙️ 设置", settingsTitle: "⚙️ 设置面板",
         tutorialBtn: "📖 使用教学", tutorialTitle: "📖 使用教学", tutorialConfirm: "确认",
         tutorialStep2: "生成后的文件放入：",
+        tutorialStep3: "首次加载较慢请耐心等待，若加载失败先点击强制更新，若再加载失败再点击「🔗 获取原始档」在那一页按 Ctrl + S（或右键另存新档）",
         dbLoading: "正在检查当前数据库...", dbSuccess: "✅ 数据库更新成功", lastUpdatePrefix: "最后更新",
         dbFallback: "⚠️ 无法连接，已使用本地旧版缓存", dbError: "❌ 数据库加载失败 (请检查网络或尝试手动上传)",
-        dbRetrying: "连接失败，等待 3 秒后进行第 {n} 次重试...", manualUploadDesc: "若连接失败或需要覆盖，可手动上传对应语言的 __data.json 文件：",
-        dbUploadBtn: "选择文件…", forceUpdateBtn: "强制更新", dbThName: "名称", dbThImage: "图片",
+        dbRetrying: "连接失败，等待 3 秒后进行第 {n} 次重试...", manualUploadDesc: "若连接失败或需要覆盖数据库，请选择对应的 .json 文件：",
+        dbUploadBtn: "选择文件…", forceUpdateBtn: "强制更新", downloadDbBtn: "📥 导出当前数据 (Backup)", sourceLinkBtn: "🔗 获取原始档",
+        dbTagSuccess: "✅ 数据库正常", dbTagWarning: "⚠️ 使用缓存", dbTagError: "❌ 加载失败", dbTagLoading: "⏳ 加载中",
+        dbThName: "名称", dbThImage: "图片", dbEmptyAlert: "数据库目前为空，无法下载！",
         createDownloadBtn: "下载并保存", resetBtn: "重置面板", nextFileStr: "下一个下载文件名：", resetCounterBtn: "重置为 1",
         importBtn: "导入文件...", noFileSelected: "尚未选择文件...",
         importHelpAgent: "选择已生成的角色配置文件，将自动解析文件名(ID)及内部数值。", importHelpBangboo: "选择已生成的邦布配置文件，将自动解析文件名(ID)及内部数值。",
@@ -458,6 +464,7 @@
         tabBuilder: "生成器", tabHistory: "历史记录", discPlaceholder: "选择驱动盘", rankB: "B级", rankA: "A级", rankS: "S级",
         posPlaceholder: "部位", posUnit: "号位", mainStatPlaceholder: "请选择主词条", mainStatStatic: "主词条为固定值", subStatPlaceholder: "请选择副词条",
         subStatInput_1: "副词条 1 强化次数", subStatInput_2: "副词条 2 强化次数", subStatInput_3: "副词条 3 强化次数", subStatInput_4: "副词条 4 强化次数",
+        discExpToggle: "⚠️ 实验性功能：解除副词条数值与重复限制", expWarning: "【警告】开启此功能将解除副词条的强化次数上限与重复限制。这可能导致生成的文件在游戏中异常或失效。确定要开启吗？",
         historyTitle: "已保存的驱动盘记录", clearHistoryBtn: "清空所有记录", emptyHistory: "目前没有任何记录。",
         directDownload: "直接下载", applyBtn: "应用", deleteBtn: "删除", confirmClear: "确定要清空所有历史记录吗？",
         oldRecordAlert: "此条为旧版记录，无法直接下载。请点击「应用」后重新生成！",
@@ -475,10 +482,13 @@
         settingsBtn: "⚙️ Settings", settingsTitle: "⚙️ Settings Panel",
         tutorialBtn: "📖 Tutorial", tutorialTitle: "📖 Tutorial", tutorialConfirm: "Confirm",
         tutorialStep2: "Place the generated files into:",
+        tutorialStep3: "First load may be slow. If it fails, click 'Force Update'. If it still fails, click '🔗 Get Raw File' and press Ctrl+S (or right-click -> Save As) on that page.",
         dbLoading: "Checking database...", dbSuccess: "✅ Database updated", lastUpdatePrefix: "Last Update",
         dbFallback: "⚠️ Connection failed, using local cache", dbError: "❌ Database load failed",
-        dbRetrying: "Connection failed, retrying in 3s (Attempt {n})...", manualUploadDesc: "If connection fails, manually upload __data.json:",
-        dbUploadBtn: "Choose file…", forceUpdateBtn: "Force Update", dbThName: "Name", dbThImage: "Image",
+        dbRetrying: "Connection failed, retrying in 3s (Attempt {n})...", manualUploadDesc: "If connection fails, manually upload the JSON file:",
+        dbUploadBtn: "Choose file…", forceUpdateBtn: "Force Update", downloadDbBtn: "📥 Export DB Backup", sourceLinkBtn: "🔗 Get Raw File",
+        dbTagSuccess: "✅ DB OK", dbTagWarning: "⚠️ DB Cached", dbTagError: "❌ DB Error", dbTagLoading: "⏳ DB Loading",
+        dbThName: "Name", dbThImage: "Image", dbEmptyAlert: "Database is currently empty!",
         createDownloadBtn: "Download & Save", resetBtn: "Reset", nextFileStr: "Next file name:", resetCounterBtn: "Reset to 1",
         importBtn: "Import File...", noFileSelected: "No file selected...",
         importHelpAgent: "Select a generated char file to auto-load ID and stats.", importHelpBangboo: "Select a generated bangboo file to auto-load ID and stats.",
@@ -487,6 +497,7 @@
         tabBuilder: "Builder", tabHistory: "History", discPlaceholder: "Select disc", rankB: "B", rankA: "A", rankS: "S",
         posPlaceholder: "Pos", posUnit: "", mainStatPlaceholder: "Select main stat", mainStatStatic: "Main Stat is static", subStatPlaceholder: "Select sub stat",
         subStatInput_1: "Sub Stat 1 Value", subStatInput_2: "Sub Stat 2 Value", subStatInput_3: "Sub Stat 3 Value", subStatInput_4: "Sub Stat 4 Value",
+        discExpToggle: "⚠️ Experimental: Remove sub-stat limits", expWarning: "[WARNING] Enabling this removes sub-stat limits and duplicate checks. Generated files may cause game errors. Proceed?",
         historyTitle: "Saved Disc Records", clearHistoryBtn: "Clear All", emptyHistory: "No records found.",
         directDownload: "Direct DL", applyBtn: "Apply", deleteBtn: "Delete", confirmClear: "Clear all history?",
         oldRecordAlert: "Old record. Please apply and recreate it!",
@@ -586,10 +597,12 @@
       setModal: document.getElementById('settings-modal'),
       dbTable: document.getElementById('db-table-body'),
       settingsDbTitle: document.getElementById('settings-db-title'),
+      sourceLinkBtn: document.getElementById('source-link-btn'),
       disc: {
         sel: document.getElementById('disc-select'), img: document.getElementById('disc-image'), imgCont: document.getElementById('disc-image-container'),
         rank: document.getElementById('disc-rank'), pos: document.getElementById('disc-position'), mainStat: document.getElementById('disc-main-stat'),
         subs: [1,2,3,4].map(i => document.getElementById(`disc-sub-${i}`)), subVals: [1,2,3,4].map(i => document.getElementById(`disc-sub-val-${i}`)),
+        expToggle: document.getElementById('disc-exp-toggle'),
         counter: document.getElementById('disc-counter-input'), out: document.getElementById('disc-output')
       },
       agent: {
@@ -625,6 +638,12 @@
       setupToolSpecificListeners();
     });
 
+    function updateSourceLinkUrl() {
+      const langMap = { 'zh-Hant': 'zh-TW', 'zh-CN': 'zh-CN', 'en': 'en' };
+      const fetchLang = langMap[appState.lang];
+      els.sourceLinkBtn.href = `${DB_CONFIG[appState.activeTool].url}?lang=${fetchLang}&branch=beta&x-sveltekit-invalidated=11`;
+    }
+
     async function switchActiveTool(tool, triggerDB = true) {
       appState.activeTool = tool;
       localStorage.setItem('yoshunko_active_tool', tool);
@@ -641,6 +660,7 @@
       document.getElementById('tut-path').textContent = TUTORIAL_PATHS[tool];
       document.getElementById('tut-step-1').textContent = TUTORIAL_STEPS[tool][appState.lang] || TUTORIAL_STEPS[tool]['zh-Hant'];
 
+      updateSourceLinkUrl();
       updateAllUIText();
 
       if (triggerDB) {
@@ -747,13 +767,26 @@
       appState.status = temp ? appState.status : { type, textKey };
       const banner = document.getElementById('db-status-banner');
       const textEl = document.getElementById('db-status-text');
+      const globalStatus = document.getElementById('global-db-status');
+
       banner.className = `notification is-${type} mb-0 flex-grow-1`;
+      globalStatus.className = `tag is-${type}`;
+
+      // 處理 Banner 文字
       let msg = i18n[appState.lang][textKey] || textKey;
       const savedDate = appState.dbDates[appState.activeTool][appState.lang];
       if ((type === 'success' || (type === 'warning' && textKey === 'dbFallback')) && savedDate) {
         msg += ` (${i18n[appState.lang].lastUpdatePrefix}: ${savedDate})`;
       }
       textEl.innerText = msg;
+
+      // 處理外面 Global Tag 的簡短文字
+      let tagText = '⏳';
+      if (type === 'success') tagText = i18n[appState.lang].dbTagSuccess;
+      else if (type === 'warning') tagText = i18n[appState.lang].dbTagWarning;
+      else if (type === 'danger') tagText = i18n[appState.lang].dbTagError;
+      else tagText = i18n[appState.lang].dbTagLoading;
+      globalStatus.innerText = tagText;
     }
 
     function populateSelectDropdown(tool) {
@@ -814,6 +847,15 @@
       let subOpts = `<option value="" disabled selected>${i18n[appState.lang].subStatPlaceholder}</option>`;
       stats.forEach(s => { if(s.subValue!==null) subOpts += `<option value="${s.id}">${s[`name_${appState.lang}`]}</option>`; });
       els.disc.subs.forEach(sel => { sel.innerHTML = subOpts; sel.selectedIndex = 0; });
+    });
+    
+    // 實驗性開關警告
+    els.disc.expToggle.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        if (!confirm(i18n[appState.lang].expWarning)) {
+          e.target.checked = false;
+        }
+      }
     });
 
     document.getElementById('disc-tab-builder-btn').addEventListener('click', (e) => {
@@ -955,6 +997,9 @@
         appState.lang = e.target.value;
         localStorage.setItem('yoshunko_all_lang', appState.lang);
         els[appState.activeTool].sel.innerHTML = `<option value="" disabled selected>${i18n[appState.lang].dbLoading}</option>`;
+        
+        updateSourceLinkUrl(); // 更新來源網址連結
+
         await checkAndLoadDB(appState.activeTool, appState.lang, false);
         updateAllUIText();
         renderSettingsTable(appState.activeTool);
@@ -988,12 +1033,41 @@
       document.getElementById('settings-modal-bg').addEventListener('click', closeSet);
       document.getElementById('settings-close-btn').addEventListener('click', closeSet);
 
-      // 設定面板按鈕
+      // 設定面板按鈕：強制更新
       document.getElementById('force-update-btn').addEventListener('click', async (e) => {
         e.target.classList.add('is-loading');
         await checkAndLoadDB(appState.activeTool, appState.lang, true);
         populateSelectDropdown(appState.activeTool); renderSettingsTable(appState.activeTool);
         e.target.classList.remove('is-loading');
+      });
+
+      // 設定面板按鈕：下載資料庫 (抓取原始檔案)
+      document.getElementById('download-db-btn').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        btn.classList.add('is-loading');
+        const tool = appState.activeTool;
+        const lang = appState.lang;
+        const conf = DB_CONFIG[tool];
+        
+        try {
+          const targetUrl = conf.url + '?lang=' + (lang === 'zh-Hant'?'zh-TW':lang) + '&branch=beta&x-sveltekit-invalidated=11';
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+          const resText = await fetch(proxyUrl).then(r => { if(!r.ok) throw new Error(r.status); return r.text(); });
+          
+          const blob = new Blob([resText], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `__data_${tool}_${lang}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } catch(err) {
+          alert("下載原始檔案失敗，請檢查網路連線！");
+        } finally {
+          btn.classList.remove('is-loading');
+        }
       });
 
       document.getElementById('manual-file-input').addEventListener('change', async (e) => {
@@ -1002,14 +1076,28 @@
         try {
           const text = await file.text();
           const conf = DB_CONFIG[appState.activeTool];
-          const parsed = extractDataGen(text, conf.regex, conf.blacklist);
+          let parsed = [];
+          
+          // 嘗試 1：解析為我們導出的乾淨 JSON 陣列
+          try {
+            const tempJson = JSON.parse(text);
+            if (Array.isArray(tempJson) && tempJson.length > 0 && tempJson[0].id) {
+              parsed = tempJson;
+            }
+          } catch(err) { /* 忽略，準備進行正則解析 */ }
+
+          // 嘗試 2：如果是 GachaBase 原始 SvelteKit __data.json 檔案
+          if (parsed.length === 0) {
+            parsed = extractDataGen(text, conf.regex, conf.blacklist);
+          }
+
           if(parsed.length > 0) {
             appState.dbs[appState.activeTool][appState.lang] = parsed;
             appState.dbDates[appState.activeTool][appState.lang] = new Date().toLocaleString('zh-TW', { hour12: false });
             localStorage.setItem(`yoshunko_${appState.activeTool}_db_data`, JSON.stringify(appState.dbs[appState.activeTool]));
             localStorage.setItem(`yoshunko_${appState.activeTool}_db_dates`, JSON.stringify(appState.dbDates[appState.activeTool]));
             updateDbStatusUI('success', 'dbSuccess'); populateSelectDropdown(appState.activeTool); renderSettingsTable(appState.activeTool);
-          } else alert("解析失敗，檔案內找不到有效資料！");
+          } else alert("解析失敗，檔案內找不到有效資料！請確認檔案來源或格式。");
         } catch(err) { alert("讀取檔案時發生錯誤！"); }
       });
 
@@ -1035,6 +1123,7 @@
         const id = parseInt(`${els.disc.sel.value.substring(0,3)}${els.disc.rank.value}${els.disc.pos.value}`);
         const mStat = stats.find(s=>s.id===els.disc.mainStat.value);
         let sum = 0; const sArr = []; const uiRec = [];
+        
         for(let i=0; i<4; i++) {
           const sId = els.disc.subs[i].value;
           if(sId) {
@@ -1042,8 +1131,13 @@
             sum += vAdd; sArr.push({key: parseInt(sId), base_value: stats.find(s=>s.id===sId).subValue, add_value: vAdd}); uiRec.push({id: sId, inputVal: vInp});
           }
         }
-        if(sum < 8 || sum > 9) return printOutput('disc', i18n[appState.lang].errSum, 'error');
-        if(new Set(sArr.map(s=>s.key)).size !== sArr.length) return printOutput('disc', i18n[appState.lang].errDup, 'error');
+        
+        // 實驗性開關檢查
+        const isExpEnabled = els.disc.expToggle.checked;
+        if (!isExpEnabled) {
+            if(sum < 8 || sum > 9) return printOutput('disc', i18n[appState.lang].errSum, 'error');
+            if(new Set(sArr.map(s=>s.key)).size !== sArr.length) return printOutput('disc', i18n[appState.lang].errDup, 'error');
+        }
         
         const disc = { id, level:15, exp:0, star:1, lock:false, properties:[{key: parseInt(mStat.id), base_value: mStat.mainValue, add_value:0}], sub_properties: sArr };
         const zonStr = ZON.stringify(disc, null, 4);
